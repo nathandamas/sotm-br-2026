@@ -1,0 +1,74 @@
+name: Run Notebook 01
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run_notebook_01.yml'
+      - 'notebooks/01_validate_ibge_input_data.ipynb'
+      - 'Petropolis/**'
+  workflow_dispatch:
+
+jobs:
+  execute-notebook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            geopandas \
+            pandas \
+            numpy \
+            shapely \
+            pyarrow \
+            matplotlib \
+            jupyter \
+            nbconvert \
+            ipykernel
+
+      - name: Show input files
+        run: |
+          pwd
+          find Petropolis -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort
+
+      - name: Execute Notebook 01
+        run: |
+          mkdir -p artifacts
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/01_validate_ibge_input_data.ipynb \
+            --output 01_validate_ibge_input_data.executed.ipynb \
+            --output-dir artifacts \
+            --ExecutePreprocessor.timeout=600 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export executed notebook to HTML
+        if: always()
+        run: |
+          if [ -f artifacts/01_validate_ibge_input_data.executed.ipynb ]; then
+            jupyter nbconvert \
+              --to html \
+              artifacts/01_validate_ibge_input_data.executed.ipynb \
+              --output 01_validate_ibge_input_data.executed.html
+          fi
+
+      - name: Upload executed notebook
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-01-execution
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 30
