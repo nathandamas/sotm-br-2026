@@ -1,0 +1,175 @@
+name: Materialize notebook results
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/materialize-notebook-results.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare output directories
+        run: |
+          rm -rf data/output/notebooks
+          mkdir -p data/output/notebooks/{01,02,03,04,05,06,07,08,09,10,11,12,13}
+
+      - name: Download Notebook 01
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31438989833
+          artifact-ids: 9082122977
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/01
+
+      - name: Download Notebook 02
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31440862694
+          artifact-ids: 9082793177
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/02
+
+      - name: Download shared Notebook 03/04 artifact for Notebook 03
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31445861031
+          artifact-ids: 9084494455
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/03
+
+      - name: Download shared Notebook 03/04 artifact for Notebook 04
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31445861031
+          artifact-ids: 9084494455
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/04
+
+      - name: Separate Notebook 03 and 04 outputs
+        run: |
+          find data/output/notebooks/03 -type f \( -name '04_*' -o -path '*/raw_ohsome_test_10_cells/*' -o -name 'petropolis_ohsome_test_10_cells.parquet' \) -delete
+          find data/output/notebooks/04 -type f -name '03_prepare_ohsome_boundaries.executed.ipynb' -delete
+
+      - name: Download Notebook 05
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31446172260
+          artifact-ids: 9084655869
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/05
+
+      - name: Download Notebook 06
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31447247778
+          artifact-ids: 9085073919
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/06
+
+      - name: Download Notebook 07
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31451193839
+          artifact-ids: 9086389498
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/07
+
+      - name: Download Notebook 08
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31452397134
+          artifact-ids: 9086782405
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/08
+
+      - name: Download Notebook 09
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31455714847
+          artifact-ids: 9087965919
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/09
+
+      - name: Download Notebook 10
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31484979441
+          artifact-ids: 9098746154
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/10
+
+      - name: Download Notebook 11
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31486390648
+          artifact-ids: 9099287431
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/11
+
+      - name: Download Notebook 12
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31487353842
+          artifact-ids: 9099676503
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/12
+
+      - name: Download Notebook 13
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31487892038
+          artifact-ids: 9099854352
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: data/output/notebooks/13
+
+      - name: Remove duplicated prerequisite notebooks from downstream artifacts
+        run: |
+          find data/output/notebooks/05 data/output/notebooks/06 -type f -name '03_prepare_ohsome_boundaries.executed.ipynb' -delete || true
+
+      - name: Create inventory
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root = Path('data/output/notebooks')
+          lines = ['notebook,file,size_bytes']
+          for nb in sorted(p for p in root.iterdir() if p.is_dir()):
+              for f in sorted(x for x in nb.rglob('*') if x.is_file()):
+                  lines.append(f'{nb.name},{f.relative_to(nb).as_posix()},{f.stat().st_size}')
+          (root / 'manifest.csv').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          print(f'Indexed {len(lines)-1} files')
+          PY
+
+      - name: Commit notebook results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/output/notebooks/
+          if git diff --cached --quiet; then
+            echo 'No notebook-result changes to commit.'
+          else
+            git commit -m 'Materialize results for notebooks 01-13'
+            git push origin main
+          fi
