@@ -10,9 +10,10 @@ on:
 jobs:
   execute-notebook-04:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     permissions:
       contents: read
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -28,14 +29,40 @@ jobs:
           python -m pip install --upgrade pip
           pip install geopandas pandas numpy pyarrow shapely requests jupyter nbconvert ipykernel
 
+      - name: Restore Notebook 02 processed grid
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 9082793177
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb02
+
+      - name: Restore processed grid path
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb02/data/processed/Petropolis/petropolis_grid_1km.parquet \
+             data/processed/Petropolis/petropolis_grid_1km.parquet
+          ls -lh data/processed/Petropolis/petropolis_grid_1km.parquet
+
+      - name: Execute Notebook 03 to prepare test boundaries
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/03_prepare_ohsome_boundaries.ipynb \
+            --output 03_prepare_ohsome_boundaries.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=600 \
+            --ExecutePreprocessor.kernel_name=python3
+
       - name: Verify Notebook 03 outputs
         run: |
           test -f data/intermediate/ohsome/Petropolis/petropolis_grid_1km_ohsome_test_boundaries.geojson
           test -f data/intermediate/ohsome/Petropolis/petropolis_grid_1km_ohsome_test_cells.parquet
+          ls -lh data/intermediate/ohsome/Petropolis/
 
       - name: Execute Notebook 04
         run: |
-          mkdir -p executed_notebooks
           jupyter nbconvert \
             --to notebook \
             --execute notebooks/04_query_ohsome_test_cells.ipynb \
@@ -44,7 +71,7 @@ jobs:
             --ExecutePreprocessor.timeout=1200 \
             --ExecutePreprocessor.kernel_name=python3
 
-      - name: Export executed notebook to HTML
+      - name: Export executed Notebook 04 to HTML
         if: always()
         run: |
           if [ -f executed_notebooks/04_query_ohsome_test_cells.executed.ipynb ]; then
@@ -63,6 +90,9 @@ jobs:
           fi
           if [ -f data/processed/Petropolis/petropolis_ohsome_test_10_cells.parquet ]; then
             cp data/processed/Petropolis/petropolis_ohsome_test_10_cells.parquet action_outputs/
+          fi
+          if [ -d data/intermediate/ohsome/Petropolis ]; then
+            cp -R data/intermediate/ohsome/Petropolis action_outputs/ohsome_boundaries
           fi
 
       - name: Upload Notebook 04 results
