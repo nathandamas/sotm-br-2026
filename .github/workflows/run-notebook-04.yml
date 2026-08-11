@@ -41,7 +41,7 @@ jobs:
       - name: Restore processed grid path
         run: |
           mkdir -p data/processed/Petropolis
-          cp restored_nb02/data/processed/Petropolis/petropolis_grid_1km.parquet \
+          cp restored_nb02/notebook-02-execution/data/processed/Petropolis/petropolis_grid_1km.parquet \
              data/processed/Petropolis/petropolis_grid_1km.parquet
           ls -lh data/processed/Petropolis/petropolis_grid_1km.parquet
 
