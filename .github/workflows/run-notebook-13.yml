@@ -1,0 +1,107 @@
+name: Run Notebook 13
+
+on:
+  push:
+    paths:
+      - 'notebooks/13_build_article_tables.ipynb'
+      - 'scripts/notebook13_build_article_tables.py'
+      - '.github/workflows/run-notebook-13.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  execute-notebook-13:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy pyarrow geopandas tabulate jupyter nbconvert ipykernel
+
+      - name: Restore validated Notebook 10 outputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31484979441
+          artifact-ids: 9098746154
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb10
+
+      - name: Restore final Notebook 11 outputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31486390648
+          artifact-ids: 9099287431
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb11
+
+      - name: Restore processed input paths
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb10/notebook-10-typology-interpretation-results/action_outputs/processed/* data/processed/Petropolis/
+          cp restored_nb11/notebook-11-final-osm-typology-results/action_outputs/processed/* data/processed/Petropolis/
+          ls -lh data/processed/Petropolis/
+
+      - name: Execute Notebook 13
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert --to notebook --execute notebooks/13_build_article_tables.ipynb \
+            --output 13_build_article_tables.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=1200 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export executed notebook to HTML
+        run: |
+          jupyter nbconvert --to html executed_notebooks/13_build_article_tables.executed.ipynb \
+            --output 13_build_article_tables.executed.html
+
+      - name: Validate generated tables
+        run: |
+          test -f tables/article/table_01_study_grid_typology_composition.csv
+          test -f tables/article/table_02_substantive_class_profiles.csv
+          test -f tables/article/table_03_road_present_regime_comparison.csv
+          test -f tables/article/table_04_spatial_coherence_summary.csv
+          test -f tables/article/table_05_class_definitions_and_limitations.csv
+          test -f tables/article/table_quality_checks.csv
+          python - <<'PY'
+          import pandas as pd
+          q = pd.read_csv('tables/article/table_quality_checks.csv')
+          assert (q['status'] == 'PASS').all(), q
+          print(q.to_string(index=False))
+          PY
+
+      - name: Commit article tables to repository
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tables/article/
+          if git diff --cached --quiet; then
+            echo 'No table changes to commit.'
+          else
+            git commit -m 'Generate article-ready tables'
+            git push origin main
+          fi
+
+      - name: Upload table results
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-13-article-tables
+          path: |
+            executed_notebooks/
+            tables/article/
+          retention-days: 30
