@@ -4,7 +4,7 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ROOT = REPO_ROOT / 'data' / 'processed' / 'Petropolis'
-OUT = REPO_ROOT / 'tables' / 'article'
+OUT = REPO_ROOT / 'data' / 'output' / 'tables'
 OUT.mkdir(parents=True, exist_ok=True)
 
 FINAL_LABELS = {
