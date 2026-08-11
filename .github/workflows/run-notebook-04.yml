@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/run-notebook-04.yml'
+      - 'notebooks/04_query_ohsome_test_cells.ipynb'
 
 jobs:
   execute-notebook-04:
