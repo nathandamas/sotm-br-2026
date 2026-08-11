@@ -1,0 +1,92 @@
+name: Run Notebook 07
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-notebook-07.yml'
+      - 'notebooks/07_build_osm_maturity_indicators.ipynb'
+
+jobs:
+  execute-notebook-07:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely jupyter nbconvert ipykernel
+
+      - name: Restore Notebook 06 outputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31447247778
+          artifact-ids: 9085073919
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb06
+
+      - name: Restore processed input paths
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb06/notebook-06-monthly-timeseries-results/action_outputs/processed/petropolis_ohsome_monthly_timeseries_895_cells.parquet \
+             data/processed/Petropolis/petropolis_ohsome_monthly_timeseries_895_cells.parquet
+          cp restored_nb06/notebook-06-monthly-timeseries-results/action_outputs/processed/petropolis_grid_1km_with_temporal_summary.parquet \
+             data/processed/Petropolis/petropolis_grid_1km_with_temporal_summary.parquet
+          ls -lh data/processed/Petropolis/
+
+      - name: Execute Notebook 07
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/07_build_osm_maturity_indicators.ipynb \
+            --output 07_build_osm_maturity_indicators.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=1200 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export executed Notebook 07 to HTML
+        if: always()
+        run: |
+          if [ -f executed_notebooks/07_build_osm_maturity_indicators.executed.ipynb ]; then
+            jupyter nbconvert \
+              --to html \
+              executed_notebooks/07_build_osm_maturity_indicators.executed.ipynb \
+              --output 07_build_osm_maturity_indicators.executed.html
+          fi
+
+      - name: Collect Notebook 07 outputs
+        if: always()
+        run: |
+          mkdir -p action_outputs/processed
+          for f in \
+            data/processed/Petropolis/petropolis_osm_maturity_indicators_895_cells.parquet \
+            data/processed/Petropolis/petropolis_grid_1km_with_maturity_indicators.parquet \
+            data/processed/Petropolis/petropolis_osm_maturity_indicator_dictionary.csv; do
+            if [ -f "$f" ]; then cp "$f" action_outputs/processed/; fi
+          done
+
+      - name: Upload Notebook 07 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-07-maturity-indicators-results
+          path: |
+            executed_notebooks/
+            action_outputs/
+          if-no-files-found: warn
+          retention-days: 30
