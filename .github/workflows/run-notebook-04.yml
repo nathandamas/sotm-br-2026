@@ -32,6 +32,7 @@ jobs:
       - name: Restore Notebook 02 processed grid
         uses: actions/download-artifact@v4
         with:
+          run-id: 31440862694
           artifact-ids: 9082793177
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: nathandamas/sotm-br-2026
