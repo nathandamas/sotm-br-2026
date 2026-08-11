@@ -1,0 +1,103 @@
+name: Run Notebook 10
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-notebook-10.yml'
+      - 'notebooks/10_interpret_osm_typology.ipynb'
+      - 'scripts/notebook10_interpret_osm_typology.py'
+
+jobs:
+  execute-notebook-10:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely matplotlib scipy libpysal jupyter nbconvert ipykernel
+
+      - name: Restore final Notebook 09 outputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31455714847
+          artifact-ids: 9087965919
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb09
+
+      - name: Restore processed input paths
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb09/notebook-09-osm-cell-typology-results/action_outputs/processed/* data/processed/Petropolis/
+          ls -lh data/processed/Petropolis/
+
+      - name: Execute Notebook 10
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/10_interpret_osm_typology.ipynb \
+            --output 10_interpret_osm_typology.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=1200 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export executed Notebook 10 to HTML
+        if: always()
+        run: |
+          if [ -f executed_notebooks/10_interpret_osm_typology.executed.ipynb ]; then
+            jupyter nbconvert \
+              --to html \
+              executed_notebooks/10_interpret_osm_typology.executed.ipynb \
+              --output 10_interpret_osm_typology.executed.html
+          fi
+
+      - name: Collect Notebook 10 outputs
+        if: always()
+        run: |
+          mkdir -p action_outputs/processed action_outputs/figures
+          for f in \
+            data/processed/Petropolis/petropolis_osm_typology_article_class_summary.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_indicator_profiles.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_kruskal_tests.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_pairwise_tests.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_road_cluster_tests.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_binary_tests.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_spatial_global.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_spatial_classes.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_neighbor_transitions.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_interpretation.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_quality_checks.csv \
+            data/processed/Petropolis/petropolis_osm_typology_article_class_summary.tex \
+            data/processed/Petropolis/petropolis_osm_typology_article_road_cluster_tests.tex; do
+            if [ -f "$f" ]; then cp "$f" action_outputs/processed/; fi
+          done
+          if [ -d data/processed/Petropolis/figures/notebook10 ]; then
+            cp -R data/processed/Petropolis/figures/notebook10/* action_outputs/figures/
+          fi
+
+      - name: Upload Notebook 10 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-10-typology-interpretation-results
+          path: |
+            executed_notebooks/
+            action_outputs/
+          if-no-files-found: warn
+          retention-days: 30
