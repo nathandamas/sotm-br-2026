@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from libpysal.weights import Queen
 from esda.moran import Moran
@@ -131,6 +131,9 @@ fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
 plt.tight_layout()
 plt.show()
 
+# PCA is exploratory only. Median imputation is followed by 1–99% winsorization
+# and StandardScaler so that heavy-tailed variables do not dominate simply because
+# their robust-scale IQR is close to zero. This PCA is not a maturity index.
 PCA_FEATURES = [
     'current_road_length_km', 'mapping_age_months', 'peak_growth_m',
     'growth_deceleration_m_per_month', 'time_to_90pct_months', 'months_since_90pct',
@@ -142,15 +145,28 @@ PCA_FEATURES = [
 ]
 PCA_FEATURES = [c for c in PCA_FEATURES if c in indicators.columns]
 X = indicators.set_index('grid_1km_id')[PCA_FEATURES].copy()
-imputation_table = pd.DataFrame({
-    'variable': PCA_FEATURES,
-    'missing_n': [int(X[c].isna().sum()) for c in PCA_FEATURES],
-    'median_used_for_pca': [float(X[c].median()) if X[c].notna().any() else np.nan for c in PCA_FEATURES],
-})
-for col in PCA_FEATURES:
-    X[col] = X[col].fillna(X[col].median())
 
-scaler = RobustScaler(quantile_range=(25, 75))
+imputation_rows = []
+for col in PCA_FEATURES:
+    median = float(X[col].median()) if X[col].notna().any() else np.nan
+    missing_n = int(X[col].isna().sum())
+    X[col] = X[col].fillna(median)
+    q01 = float(X[col].quantile(0.01))
+    q99 = float(X[col].quantile(0.99))
+    X[col] = X[col].clip(lower=q01, upper=q99)
+    imputation_rows.append({
+        'variable': col,
+        'missing_n': missing_n,
+        'median_used_for_pca': median,
+        'winsor_lower_1pct': q01,
+        'winsor_upper_99pct': q99,
+    })
+imputation_table = pd.DataFrame(imputation_rows)
+
+# Exclude any feature that is constant after preprocessing.
+pca_features_used = [c for c in PCA_FEATURES if X[c].nunique() > 1]
+X = X[pca_features_used]
+scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 pca = PCA()
 scores = pca.fit_transform(X_scaled)
@@ -161,10 +177,10 @@ explained = pd.DataFrame({
 })
 loadings = pd.DataFrame(
     pca.components_.T,
-    index=PCA_FEATURES,
-    columns=[f'PC{i+1}' for i in range(len(PCA_FEATURES))],
+    index=pca_features_used,
+    columns=[f'PC{i+1}' for i in range(len(pca_features_used))],
 )
-print('\nPCA imputation table:')
+print('\nPCA preprocessing diagnostics:')
 print(imputation_table.to_string(index=False))
 print('\nPCA explained variance:')
 print(explained.head(10).to_string(index=False))
@@ -242,6 +258,7 @@ checks = {
     'ids_unique': feature_matrix['grid_1km_id'].is_unique,
     'pca_scores_complete': feature_matrix[['PC1', 'PC2', 'PC3']].notna().all().all(),
     'pca_variance_sums_to_one': np.isclose(explained['explained_variance_ratio'].sum(), 1.0),
+    'pca_pc1_not_single_feature_dominated': float(loadings['PC1'].abs().max()) < 0.80,
     'correlation_matrix_symmetric': np.allclose(corr.values, corr.values.T, equal_nan=True),
     'moran_results_created': len(moran_results) == len(SPATIAL_INDICATORS),
     'moran_i_finite_when_tested': moran_results.loc[moran_results['moran_i'].notna(), 'moran_i'].between(-1, 1).all(),
