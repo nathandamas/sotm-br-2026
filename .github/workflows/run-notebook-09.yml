@@ -28,19 +28,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install geopandas pandas numpy pyarrow shapely matplotlib scipy scikit-learn libpysal jupyter nbconvert ipykernel
-      - name: Restore Notebook 08 outputs
+      - name: Restore final Notebook 08 outputs
         uses: actions/download-artifact@v4
         with:
-          run-id: 31449417537
-          artifact-ids: 9085766055
+          run-id: 31452397134
+          artifact-ids: 9086782405
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: nathandamas/sotm-br-2026
           path: restored_nb08
-      - name: Restore Notebook 07 spatial grid
+      - name: Restore corrected Notebook 07 spatial grid
         uses: actions/download-artifact@v4
         with:
-          run-id: 31448678368
-          artifact-ids: 9085509780
+          run-id: 31451193839
+          artifact-ids: 9086389498
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: nathandamas/sotm-br-2026
           path: restored_nb07
@@ -70,7 +70,7 @@ jobs:
             data/processed/Petropolis/petropolis_osm_cell_typology_895_cells.parquet \
             data/processed/Petropolis/petropolis_grid_1km_with_osm_typology.parquet \
             data/processed/Petropolis/petropolis_osm_typology_feature_selection.csv \
-            data/processed/Petropolis/petropolis_osm_typology_imputation.csv \
+            data/processed/Petropolis/petropolis_osm_typology_preprocessing.csv \
             data/processed/Petropolis/petropolis_osm_typology_model_selection.csv \
             data/processed/Petropolis/petropolis_osm_typology_stability.csv \
             data/processed/Petropolis/petropolis_osm_typology_profiles.csv \
