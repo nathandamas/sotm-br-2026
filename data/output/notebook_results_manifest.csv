@@ -1,0 +1,14 @@
+notebook,status,successful_run_id,artifact_id,artifact_name,notes
+01_validate_ibge_input_data,SUCCESS,31438989833,9082122977,notebook-01-execution,Standalone successful execution and artifact
+02_build_ibge_1km_grid,SUCCESS,31440862694,9082793177,notebook-02-execution,Standalone successful execution and artifact
+03_prepare_ohsome_boundaries,SUCCESS,31445861031,9084494455,notebook-04-ohsome-test-results,Executed and validated inside Notebook 04 workflow; executed notebook and boundary outputs are included in the Notebook 04 artifact
+04_query_ohsome_test_cells,SUCCESS,31445861031,9084494455,notebook-04-ohsome-test-results,Standalone notebook executed in workflow after Notebook 03 preparation
+05_query_ohsome_all_895_cells,SUCCESS,31446172260,9084655869,notebook-05-ohsome-production-results,Canonical production run for all 895 cells
+06_build_monthly_osm_timeseries,SUCCESS,31447247778,9085073919,notebook-06-monthly-timeseries-results,224 complete months and 200480 cell-month records
+07_build_osm_maturity_indicators,SUCCESS,31451193839,9086389498,notebook-07-maturity-indicators-results,Final corrected validated run
+08_explore_osm_indicator_structure,SUCCESS,31452397134,9086782405,notebook-08-indicator-structure-results,Final corrected validated run
+09_build_osm_cell_typology,SUCCESS,31455714847,9087965919,notebook-09-osm-cell-typology-results,Final validated typology run
+10_interpret_osm_typology,SUCCESS,31484979441,9098746154,notebook-10-typology-interpretation-results,Validated canonical interpretation run; a later successful equivalent run also exists
+11_finalize_osm_typology,SUCCESS,31486390648,9099287431,notebook-11-final-osm-typology-results,Final typology labels and manuscript-ready synthesis
+12_build_article_maps,SUCCESS,31487353842,9099676503,notebook-12-article-maps,Eight article maps in PNG and PDF; repository copies are under data/output/figures
+13_build_article_tables,SUCCESS,31487892038,9099854352,notebook-13-article-tables,Five article tables in CSV Markdown and LaTeX; repository copies are under data/output/tables
