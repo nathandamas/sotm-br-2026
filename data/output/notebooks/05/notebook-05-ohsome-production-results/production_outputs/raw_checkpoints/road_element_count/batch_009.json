@@ -1,0 +1,276 @@
+{
+  "request": {
+    "metric": "road_element_count",
+    "endpoint": "/elements/count/groupBy/boundary",
+    "batch_no": 9,
+    "ids": [
+      "1KME6109N8811",
+      "1KME6109N8812",
+      "1KME6109N8813",
+      "1KME6109N8814",
+      "1KME6109N8815",
+      "1KME6109N8816",
+      "1KME6109N8817",
+      "1KME6109N8818",
+      "1KME6109N8819",
+      "1KME6109N8820",
+      "1KME6109N8821",
+      "1KME6109N8822",
+      "1KME6109N8823",
+      "1KME6109N8824",
+      "1KME6109N8825",
+      "1KME6109N8826",
+      "1KME6110N8798",
+      "1KME6110N8799",
+      "1KME6110N8800",
+      "1KME6110N8801",
+      "1KME6110N8802",
+      "1KME6110N8803",
+      "1KME6110N8804",
+      "1KME6110N8805",
+      "1KME6110N8806"
+    ],
+    "feature_count": 25,
+    "filter": "highway=* and geometry:line",
+    "extra": {}
+  },
+  "response": {
+    "status_code": 200,
+    "content_type": "application/json",
+    "body": {
+      "attribution": {
+        "url": "https://ohsome.org/copyrights",
+        "text": "© OpenStreetMap contributors"
+      },
+      "apiVersion": "1.10.4",
+      "groupByResult": [
+        {
+          "groupByObject": "1KME6109N8811",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 2.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8812",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 24.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8813",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 16.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8814",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 4.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8815",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 2.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8816",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8817",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8818",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8819",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8820",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8821",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8822",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 0.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8823",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 2.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8824",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 6.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8825",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 1.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6109N8826",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 5.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8798",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 2.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8799",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 51.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8800",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 42.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8801",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 82.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8802",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 47.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8803",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 112.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8804",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 71.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8805",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 91.0
+            }
+          ]
+        },
+        {
+          "groupByObject": "1KME6110N8806",
+          "result": [
+            {
+              "timestamp": "2026-07-27T09:00:00Z",
+              "value": 22.0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "recorded_at_utc": "2026-08-11T00:30:29.230327+00:00"
+}

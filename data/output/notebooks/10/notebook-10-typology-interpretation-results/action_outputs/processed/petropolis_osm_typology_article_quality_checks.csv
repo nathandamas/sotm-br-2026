@@ -1,0 +1,11 @@
+check,status
+rows_895,PASS
+ids_unique,PASS
+exactly_three_operational_classes,PASS
+class_summary_complete,PASS
+spatial_edges_exist,PASS
+spatial_permutation_valid,PASS
+article_tables_written,PASS
+article_figures_written,PASS
+broad_test_pvalues_valid,PASS
+road_cluster_test_pvalues_valid,PASS

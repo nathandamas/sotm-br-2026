@@ -1,0 +1,43 @@
+variable,class_a,class_b,label_a,label_b,n_a,n_b,median_a,median_b,mannwhitney_u,p_value,cliffs_delta_a_vs_b,p_adj_bh,significant_fdr_0_05
+current_road_length_km,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,2.2708200000000005,0.0,3.0895192876895477e-66,-1.0,1.29759810082961e-64,True
+current_road_length_km,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,4.75295,0.0,8.581873151989667e-38,-1.0,5.1491238911937995e-37,True
+current_road_length_km,1,2,Provisional cluster 1,Provisional cluster 2,718,63,2.2708200000000005,4.75295,11045.0,1.5864879837553018e-11,-0.5116505283636203,3.919558548101334e-11,True
+active_month_ratio,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,0.04017857142857143,2261.0,2.3540823909457152e-59,-0.9447539461467038,1.6478576736620006e-58,True
+active_month_ratio,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,0.0625,82.0,1.6119568697434218e-32,-0.9771651350598719,5.641849044101976e-32,True
+active_month_ratio,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.04017857142857143,0.0625,15857.0,8.117034905893745e-05,-0.2988902153247557,0.00012175552358840615,True
+recent_activity_ratio,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,0.0,22116.0,2.3935464372545907e-19,-0.45961002785515326,7.732996181899447e-19,True
+recent_activity_ratio,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,0.041666666666666664,1653.0,5.607195715001447e-18,-0.5396825396825398,1.5518375931428372e-17,True
+recent_activity_ratio,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.0,0.041666666666666664,19901.5,0.08290958557421707,-0.12006455321218557,0.089287246003003,False
+persistence_index,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,0.0,22116.0,4.1454017136342625e-19,-0.45961002785515326,1.2436205140902788e-18,True
+persistence_index,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,0.03608439182435161,1653.0,5.9117622595917605e-18,-0.5396825396825398,1.5518375931428372e-17,True
+persistence_index,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.0,0.03608439182435161,19702.5,0.06527276013333873,-0.12886324446213027,0.07409340339460072,False
+total_contributions,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,28.0,1438.5,9.499502617403237e-62,-0.9648511948394664,9.974477748273399e-61,True
+total_contributions,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,96.0,35.5,2.455135159878607e-33,-0.9901141743247006,1.0311567671490148e-32,True
+total_contributions,1,2,Provisional cluster 1,Provisional cluster 2,718,63,28.0,96.0,13548.0,1.2750189809471586e-07,-0.4009815625414511,2.550037961894317e-07,True
+total_contributor_months,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,11.0,2205.0,1.711937841222267e-59,-0.9461222694619558,1.4380277866267042e-58,True
+total_contributor_months,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,19.0,69.0,9.417767924129304e-33,-0.9807852965747703,3.5958750255766437e-32,True
+total_contributor_months,1,2,Provisional cluster 1,Provisional cluster 2,718,63,11.0,19.0,14923.5,7.340659937296402e-06,-0.3401644780474864,1.1857989129478802e-05,True
+mean_monthly_contributions,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,0.125,1438.5,9.499502617403237e-62,-0.9648511948394664,9.974477748273399e-61,True
+mean_monthly_contributions,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,0.42857142857142855,35.5,2.455135159878607e-33,-0.9901141743247006,1.0311567671490148e-32,True
+mean_monthly_contributions,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.125,0.42857142857142855,13548.0,1.2750189809471586e-07,-0.4009815625414511,2.550037961894317e-07,True
+peak_monthly_contributions,0,1,Structural class: no current mapped roads,Provisional cluster 1,114,718,0.0,10.0,1089.5,6.670956633433634e-63,-0.9733787812148756,1.400900893021063e-61,True
+peak_monthly_contributions,0,2,Structural class: no current mapped roads,Provisional cluster 2,114,63,0.0,28.0,18.0,1.185162170920079e-33,-0.9949874686716792,6.222101397330415e-33,True
+peak_monthly_contributions,1,2,Provisional cluster 1,Provisional cluster 2,718,63,10.0,28.0,13047.5,2.425040677835347e-08,-0.4231109342529955,5.6584282482824764e-08,True
+contribution_temporal_concentration_hhi,0,1,Structural class: no current mapped roads,Provisional cluster 1,14,718,0.02270408163265306,0.07956130830107892,2332.5,0.0005880493502447577,-0.5359132510943097,0.0008232690903426607,True
+contribution_temporal_concentration_hhi,0,2,Structural class: no current mapped roads,Provisional cluster 2,14,63,0.02270408163265306,0.10232328225407812,181.5,0.0006233723914188351,-0.5884353741496599,0.0008445690464384218,True
+contribution_temporal_concentration_hhi,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.07956130830107892,0.10232328225407812,21004.5,0.34775494913893545,-0.07129592784188887,0.35623677716671437,False
+recent_to_historical_activity_ratio,0,1,Structural class: no current mapped roads,Provisional cluster 1,14,716,0.0,0.0,2716.0,0.0012882161490503207,-0.45810055865921784,0.001690783695628546,True
+recent_to_historical_activity_ratio,0,2,Structural class: no current mapped roads,Provisional cluster 2,14,63,0.0,0.05995203836930456,203.0,0.0005575099949956372,-0.5396825396825398,0.0008074282686143711,True
+recent_to_historical_activity_ratio,1,2,Provisional cluster 1,Provisional cluster 2,716,63,0.0,0.05995203836930456,21817.5,0.6403951615703833,-0.03265496142591118,0.6403951615703833,False
+expansion_share_proxy,0,1,Structural class: no current mapped roads,Provisional cluster 1,14,718,0.3666666666666667,0.2857142857142857,6313.0,0.10047323656512046,0.25606844409072815,0.10549689839337648,False
+expansion_share_proxy,0,2,Structural class: no current mapped roads,Provisional cluster 2,14,63,0.3666666666666667,0.2689655172413793,644.0,0.007444110769831692,0.46031746031746024,0.00893293292379803,True
+expansion_share_proxy,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.2857142857142857,0.2689655172413793,26272.0,0.03323308281510313,0.16160410310828133,0.03877192995095365,True
+maintenance_share_proxy,0,1,Structural class: no current mapped roads,Provisional cluster 1,14,718,0.3333333333333333,0.6666666666666666,1846.0,4.912515570393853e-05,-0.6327099084759251,7.641690887279326e-05,True
+maintenance_share_proxy,0,2,Structural class: no current mapped roads,Provisional cluster 2,14,63,0.3333333333333333,0.7157894736842105,70.0,9.797535851716517e-07,-0.8412698412698413,1.7891152424873639e-06,True
+maintenance_share_proxy,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.6666666666666666,0.7157894736842105,17550.5,0.0031593498519496364,-0.2240129106424371,0.003902726287702492,True
+deletion_share_proxy,0,1,Structural class: no current mapped roads,Provisional cluster 1,14,718,0.3333333333333333,0.0219498976273636,8718.0,9.73023481173437e-07,0.7345801830481495,1.7891152424873639e-06,True
+deletion_share_proxy,0,2,Structural class: no current mapped roads,Provisional cluster 2,14,63,0.3333333333333333,0.017804154302670624,781.0,4.3043078818446855e-06,0.7709750566893423,7.231237241499071e-06,True
+deletion_share_proxy,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.0219498976273636,0.017804154302670624,25479.0,0.08280445413595514,0.12654198169518494,0.089287246003003,False
+contributor_volatility_proxy,0,1,Structural class: no current mapped roads,Provisional cluster 1,14,718,0.0,0.33333333333333337,2687.5,0.002360294045414579,-0.4652805411858336,0.0030040106032549188,True
+contributor_volatility_proxy,0,2,Structural class: no current mapped roads,Provisional cluster 2,14,63,0.0,0.6030226891555273,76.0,1.3936256193461952e-06,-0.8276643990929705,2.4388448338558414e-06,True
+contributor_volatility_proxy,1,2,Provisional cluster 1,Provisional cluster 2,718,63,0.33333333333333337,0.6030226891555273,13593.0,9.771548607145088e-08,-0.3989919087412124,2.1600265342110197e-07,True

@@ -1,0 +1,4 @@
+typology_class_id,typology_label,n_cells,n_connected_components,largest_component_n,largest_component_share
+0,Structural class: no current mapped roads,114,39,25,0.21929824561403508
+1,Provisional cluster 1,718,20,409,0.5696378830083565
+2,Provisional cluster 2,63,29,12,0.19047619047619047

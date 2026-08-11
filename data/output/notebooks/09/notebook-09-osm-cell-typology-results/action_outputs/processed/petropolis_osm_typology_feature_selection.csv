@@ -1,0 +1,11 @@
+variable,selected,missing_pct,unique_n,criterion
+current_road_length_km,True,0.0,781,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+mapping_age_months,True,11.396648044692736,56,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+growth_deceleration_m_per_month,True,11.396648044692736,334,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+time_to_90pct_months,True,12.737430167597768,151,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+plateau_duration_months,True,16.312849162011172,102,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+active_month_ratio,True,0.0,63,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+recent_activity_ratio,True,0.0,10,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+contribution_temporal_concentration_hhi,True,11.1731843575419,642,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+expansion_share_proxy,True,11.1731843575419,335,interpretable representative; no selected pair has |Spearman rho| >= 0.85
+contributor_volatility_proxy,True,11.1731843575419,333,interpretable representative; no selected pair has |Spearman rho| >= 0.85

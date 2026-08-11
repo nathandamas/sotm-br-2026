@@ -1,0 +1,62 @@
+{
+  "created_at_utc": "2026-08-11T00:31:35.255360+00:00",
+  "api_version": "1.10.4",
+  "oshdb_from": "2007-10-08T00:00:00Z",
+  "oshdb_to": "2026-07-27T09:00Z",
+  "road_filter": "highway=* and geometry:line",
+  "batch_size": 25,
+  "batch_count": 36,
+  "cells": 895,
+  "coverage": [
+    {
+      "metric": "road_length_m",
+      "non_null": 895,
+      "zeros": 114,
+      "negative": 0,
+      "complete_895": true
+    },
+    {
+      "metric": "road_element_count",
+      "non_null": 895,
+      "zeros": 114,
+      "negative": 0,
+      "complete_895": true
+    },
+    {
+      "metric": "contributors_count",
+      "non_null": 895,
+      "zeros": 100,
+      "negative": 0,
+      "complete_895": true
+    },
+    {
+      "metric": "contributions_count",
+      "non_null": 895,
+      "zeros": 100,
+      "negative": 0,
+      "complete_895": true
+    }
+  ],
+  "cache_stats": [
+    {
+      "metric": "contributions_count",
+      "source": "request",
+      "batches": 36
+    },
+    {
+      "metric": "contributors_count",
+      "source": "request",
+      "batches": 36
+    },
+    {
+      "metric": "road_element_count",
+      "source": "request",
+      "batches": 36
+    },
+    {
+      "metric": "road_length_m",
+      "source": "request",
+      "batches": 36
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+check,status
+rows_895_typology,PASS
+rows_895_spatial,PASS
+ids_unique_typology,PASS
+ids_unique_spatial,PASS
+ids_match,PASS
+all_final_labels_present,PASS
+three_final_labels,PASS
+provisional_labels_preserved,PASS
+class_counts_preserved,PASS
+naming_evidence_nonempty,PASS
+notebook10_qc_all_pass,PASS

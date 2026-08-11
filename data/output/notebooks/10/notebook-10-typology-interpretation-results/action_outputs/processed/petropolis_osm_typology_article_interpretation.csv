@@ -1,0 +1,4 @@
+typology_class_id,typology_label,provisional_substantive_interpretation
+0,Structural class: no current mapped roads,Structural absence of currently mapped highway-line geometry in the 1 km cell; this class is not evidence of real-world road absence or OSM incompleteness.
+1,Provisional cluster 1,"Road-present intrinsic mapping regime with lower median mapped-road length, lower historical activity persistence, and lower recent activity than the other modeled cluster. Interpretation is relative to OSM history only."
+2,Provisional cluster 2,"Road-present intrinsic mapping regime with higher median mapped-road length, higher historical activity persistence, and higher recent activity than the other modeled cluster. Interpretation is relative to OSM history only."

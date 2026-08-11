@@ -1,0 +1,31 @@
+typology_class_id,typology_label,n_cells,variable,n_nonmissing,mean,median,q25,q75
+0,Structural class: no current mapped roads,114,current_road_length_km,114,0.0,0.0,0.0,0.0
+0,Structural class: no current mapped roads,114,mapping_age_months,12,192.33333333333334,207.0,207.0,207.0
+0,Structural class: no current mapped roads,114,growth_deceleration_m_per_month,12,0.0,0.0,0.0,0.0
+0,Structural class: no current mapped roads,114,time_to_90pct_months,0,,,,
+0,Structural class: no current mapped roads,114,plateau_duration_months,0,,,,
+0,Structural class: no current mapped roads,114,active_month_ratio,114,0.0030545112781954886,0.0,0.0,0.0
+0,Structural class: no current mapped roads,114,recent_activity_ratio,114,0.0,0.0,0.0,0.0
+0,Structural class: no current mapped roads,114,contribution_temporal_concentration_hhi,14,0.16076756697172292,0.02270408163265306,0.0,0.049382716049382706
+0,Structural class: no current mapped roads,114,expansion_share_proxy,14,0.3764285714285714,0.3666666666666667,0.2708333333333333,0.5
+0,Structural class: no current mapped roads,114,contributor_volatility_proxy,14,0.10654098076459058,0.0,0.0,0.2395787118749774
+1,Provisional cluster 1,718,current_road_length_km,718,3.173809359331476,2.2708200000000005,1.200155,4.0214125
+1,Provisional cluster 1,718,mapping_age_months,718,156.4025069637883,140.0,122.0,207.0
+1,Provisional cluster 1,718,growth_deceleration_m_per_month,718,-0.0012474264260624263,0.0,0.0,0.0
+1,Provisional cluster 1,718,time_to_90pct_months,718,68.75487465181058,59.5,0.0,121.0
+1,Provisional cluster 1,718,plateau_duration_months,686,77.69096209912536,70.0,59.0,102.75
+1,Provisional cluster 1,718,active_month_ratio,718,0.06486271388778353,0.04017857142857143,0.022321428571428572,0.09263392857142858
+1,Provisional cluster 1,718,recent_activity_ratio,718,0.04044800371402042,0.0,0.0,0.041666666666666664
+1,Provisional cluster 1,718,contribution_temporal_concentration_hhi,718,0.14840386268025327,0.07956130830107892,0.04820173066522443,0.1410817355330955
+1,Provisional cluster 1,718,expansion_share_proxy,718,0.3509149803522537,0.2857142857142857,0.2056363065983478,0.4166666666666667
+1,Provisional cluster 1,718,contributor_volatility_proxy,718,0.3568121489008088,0.33333333333333337,0.0,0.5893232742192474
+2,Provisional cluster 2,63,current_road_length_km,63,5.495820476190476,4.75295,2.893845,7.055285
+2,Provisional cluster 2,63,mapping_age_months,63,146.66666666666666,127.0,127.0,197.0
+2,Provisional cluster 2,63,growth_deceleration_m_per_month,63,116.3778191856453,93.81652173913044,69.82847826086956,138.09326086956523
+2,Provisional cluster 2,63,time_to_90pct_months,63,68.80952380952381,66.0,20.5,85.0
+2,Provisional cluster 2,63,plateau_duration_months,63,66.53968253968254,59.0,58.0,72.5
+2,Provisional cluster 2,63,active_month_ratio,63,0.09481292517006802,0.0625,0.04241071428571429,0.12946428571428573
+2,Provisional cluster 2,63,recent_activity_ratio,63,0.06349206349206349,0.041666666666666664,0.0,0.08333333333333333
+2,Provisional cluster 2,63,contribution_temporal_concentration_hhi,63,0.1135581185900206,0.10232328225407812,0.05222041735783954,0.14515303158438722
+2,Provisional cluster 2,63,expansion_share_proxy,63,0.2754492843226541,0.2689655172413793,0.1996732026143791,0.3299319727891156
+2,Provisional cluster 2,63,contributor_volatility_proxy,63,0.5737407228656941,0.6030226891555273,0.3517267897864592,0.7442447027844974

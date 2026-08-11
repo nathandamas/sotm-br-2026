@@ -1,0 +1,4 @@
+typology_class_id,provisional_label,substantive_label,n_cells,share_pct,median_current_road_length_km,median_active_month_ratio,median_total_contributions,median_mapping_age_months,median_time_to_90pct_months,median_plateau_duration_months
+0,Structural class: no current mapped roads,No currently mapped OSM road lines,114,12.737430167597768,0.0,0.0,0.0,207.0,,
+1,Provisional cluster 1,"Lower-intensity, longer-plateau mapping regime",718,80.22346368715084,2.2708200000000005,0.0401785714285714,28.0,140.0,59.5,70.0
+2,Provisional cluster 2,"Higher-intensity, expansion-pulse mapping regime",63,7.039106145251396,4.75295,0.0625,96.0,127.0,66.0,59.0

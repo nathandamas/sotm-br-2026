@@ -1,0 +1,4 @@
+typology_class_id,typology_label,n_cells,share_of_895_pct,median_current_road_length_km,median_active_month_ratio,median_recent_activity_ratio,median_total_contributions,median_total_contributor_months,median_temporal_concentration_hhi,median_mapping_age_months,median_time_to_90pct_months,median_plateau_duration_months
+0,Structural class: no current mapped roads,114,12.737430167597767,0.0,0.0,0.0,0.0,0.0,0.02270408163265306,207.0,,
+1,Provisional cluster 1,718,80.22346368715084,2.2708200000000005,0.04017857142857143,0.0,28.0,11.0,0.07956130830107892,140.0,59.5,70.0
+2,Provisional cluster 2,63,7.039106145251396,4.75295,0.0625,0.041666666666666664,96.0,19.0,0.10232328225407812,127.0,66.0,59.0

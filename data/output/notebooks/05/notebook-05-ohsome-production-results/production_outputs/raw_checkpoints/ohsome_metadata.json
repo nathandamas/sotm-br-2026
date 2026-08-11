@@ -1,0 +1,42 @@
+{
+  "attribution": {
+    "url": "https://ohsome.org/copyrights",
+    "text": "© OpenStreetMap contributors"
+  },
+  "apiVersion": "1.10.4",
+  "timeout": 600.0,
+  "extractRegion": {
+    "spatialExtent": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -180.0,
+            -90.0
+          ],
+          [
+            180.0,
+            -90.0
+          ],
+          [
+            180.0,
+            90.0
+          ],
+          [
+            -180.0,
+            90.0
+          ],
+          [
+            -180.0,
+            -90.0
+          ]
+        ]
+      ]
+    },
+    "temporalExtent": {
+      "fromTimestamp": "2007-10-08T00:00:00Z",
+      "toTimestamp": "2026-07-27T09:00Z"
+    },
+    "replicationSequenceNumber": 121586
+  }
+}

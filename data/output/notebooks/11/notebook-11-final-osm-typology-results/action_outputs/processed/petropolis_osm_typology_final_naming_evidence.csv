@@ -1,0 +1,12 @@
+variable,median_cluster_1,median_cluster_2,cliffs_delta_cluster1_vs_2,p_adj_bh,significant_fdr_0_05,evidence_family
+current_road_length_km,2.2708200000000005,4.75295,-0.5116505283636203,3.919558548101334e-11,True,activity_or_network_state
+active_month_ratio,0.0401785714285714,0.0625,-0.2988902153247557,0.0001217555235884,True,activity_or_network_state
+total_contributions,28.0,96.0,-0.4009815625414511,2.550037961894317e-07,True,activity_or_network_state
+total_contributor_months,11.0,19.0,-0.3401644780474864,1.1857989129478802e-05,True,activity_or_network_state
+contributor_volatility_proxy,0.3333333333333333,0.6030226891555273,-0.3989919087412124,2.1600265342110202e-07,True,activity_or_network_state
+peak_growth_m,1401.055,2136.92,-0.4054472299597648,3.471540613411116e-07,True,road_history
+positive_growth_months,4.0,7.0,-0.4234204359552549,9.699991831154888e-08,True,road_history
+growth_rate_initial_m_per_month,0.0,95.20652173913044,-0.999778927355529,1.7037288827579268e-55,True,road_history
+growth_deceleration_m_per_month,0.0,93.81652173913044,-1.0,1.4549215359323435e-47,True,road_history
+months_since_90pct,75.0,68.0,0.198567449263828,0.0221536050532279,True,road_history
+plateau_duration_months,70.0,59.0,0.2262020454440279,0.0087560069682298,True,road_history

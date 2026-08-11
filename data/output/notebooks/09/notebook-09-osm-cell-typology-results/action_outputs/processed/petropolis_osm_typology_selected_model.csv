@@ -1,0 +1,2 @@
+selected_method,selected_k_road_present,road_present_n,structural_no_road_n,total_n,silhouette,calinski_harabasz,davies_bouldin,stability_ari_mean,stability_ari_sd,min_cluster_fraction,queen_neighbor_agreement,pca3_sensitivity_ari,selection_rule
+kmeans,2,781,114,895,0.8370515075709727,1592.421133369827,0.43340015723393843,0.9168508141274152,0.05633208495337955,0.08066581306017925,0.8800682885189928,1.0,Admissible: minimum cluster share >=5% and mean subsample ARI >=0.75.

@@ -1,0 +1,66 @@
+{
+  "created_at_utc": "2026-08-11T00:51:52.348367+00:00",
+  "api_version": "1.10.4",
+  "oshdb_from_timestamp": "2007-10-08T00:00:00+00:00",
+  "oshdb_to_timestamp": "2026-07-27T09:00:00+00:00",
+  "complete_month_query": "2007-11-01/2026-07-01/P1M",
+  "filter": "highway=* and geometry:line",
+  "cells": 895,
+  "panel_months": 224,
+  "panel_rows": 200480,
+  "metrics": {
+    "road_length_m": {
+      "endpoint": "/elements/length/groupBy/boundary",
+      "kind": "snapshot",
+      "extra": {}
+    },
+    "road_element_count": {
+      "endpoint": "/elements/count/groupBy/boundary",
+      "kind": "snapshot",
+      "extra": {}
+    },
+    "contributors_count": {
+      "endpoint": "/users/count/groupBy/boundary",
+      "kind": "interval",
+      "extra": {}
+    },
+    "contributions_count": {
+      "endpoint": "/contributions/count/groupBy/boundary",
+      "kind": "interval",
+      "extra": {}
+    },
+    "creation_contributions_count": {
+      "endpoint": "/contributions/count/groupBy/boundary",
+      "kind": "interval",
+      "extra": {
+        "contributionType": "creation"
+      }
+    },
+    "deletion_contributions_count": {
+      "endpoint": "/contributions/count/groupBy/boundary",
+      "kind": "interval",
+      "extra": {
+        "contributionType": "deletion"
+      }
+    },
+    "tag_change_contributions_count": {
+      "endpoint": "/contributions/count/groupBy/boundary",
+      "kind": "interval",
+      "extra": {
+        "contributionType": "tagChange"
+      }
+    },
+    "geometry_change_contributions_count": {
+      "endpoint": "/contributions/count/groupBy/boundary",
+      "kind": "interval",
+      "extra": {
+        "contributionType": "geometryChange"
+      }
+    }
+  },
+  "outputs": [
+    "data/processed/Petropolis/petropolis_ohsome_monthly_timeseries_895_cells.parquet",
+    "data/processed/Petropolis/petropolis_ohsome_temporal_summary_895_cells.parquet",
+    "data/processed/Petropolis/petropolis_grid_1km_with_temporal_summary.parquet"
+  ]
+}

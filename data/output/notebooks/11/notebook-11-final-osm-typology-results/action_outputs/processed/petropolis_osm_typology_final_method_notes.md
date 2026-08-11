@@ -1,0 +1,3 @@
+# Methodological interpretation boundary
+
+The class labels are descriptive summaries of intrinsic OpenStreetMap history. The structural no-road class denotes absence of currently mapped highway-line geometry in the analyzed snapshot, not absence of physical roads. The two road-present regimes are relative clusters derived from selected intrinsic indicators and do not constitute external quality or completeness classes. Recent activity prevalence did not differ significantly between the two road-present clusters after multiple-testing correction, so the final names avoid implying persistently higher current activity.

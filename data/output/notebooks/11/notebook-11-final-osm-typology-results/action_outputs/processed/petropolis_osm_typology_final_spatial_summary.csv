@@ -1,0 +1,2 @@
+n_queen_edges,observed_same_class_neighbor_share,permutation_mean_same_class_share,permutation_sd_same_class_share,permutation_p_upper,permutations,queen_islands
+2959,0.7428185197701926,0.6641318574404076,0.0071405611491529,0.001,999,8

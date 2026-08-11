@@ -1,0 +1,7 @@
+check,pass,status
+table_1_total_895,True,PASS
+table_1_three_classes,True,PASS
+table_2_has_profiles,True,PASS
+table_3_has_effect_sizes,True,PASS
+table_4_spatial_metrics,True,PASS
+table_5_three_definitions,True,PASS

@@ -1,0 +1,4 @@
+state,test,odds_ratio_cluster1_vs_2,p_value,cluster1_positive_n,cluster1_total_n,cluster2_positive_n,cluster2_total_n,p_adj_bh,significant_fdr_0_05
+recent_activity_present,Fisher exact,1.3784743991640542,0.23763039234433547,330,718,34,63,0.23763039234433547,False
+plateau_detected,Fisher exact,inf,0.1010415740077231,686,718,63,63,0.23763039234433547,False
+high_temporal_concentration_hhi_ge_0_25,Fisher exact,0.47306967984934084,0.22236555240093836,90,718,4,63,0.23763039234433547,False

@@ -1,0 +1,10 @@
+check,status
+rows_895,PASS
+ids_unique,PASS
+ids_match_grid,PASS
+all_cells_classified,PASS
+selected_features_nonredundant,PASS
+selected_features_finite_after_preprocessing,PASS
+minimum_cluster_fraction_ok,PASS
+stability_finite,PASS
+profiles_cover_all_classes,PASS
