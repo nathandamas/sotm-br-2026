@@ -1,0 +1,108 @@
+name: Run Notebook 06
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-notebook-06.yml'
+      - 'notebooks/06_build_monthly_osm_timeseries.ipynb'
+
+jobs:
+  execute-notebook-06:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely requests jupyter nbconvert ipykernel
+
+      - name: Restore Notebook 02 processed grid
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31440862694
+          artifact-ids: 9082793177
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb02
+
+      - name: Restore processed grid path
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb02/notebook-02-execution/data/processed/Petropolis/petropolis_grid_1km.parquet \
+             data/processed/Petropolis/petropolis_grid_1km.parquet
+          ls -lh data/processed/Petropolis/petropolis_grid_1km.parquet
+
+      - name: Execute Notebook 03 to prepare all boundaries
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/03_prepare_ohsome_boundaries.ipynb \
+            --output 03_prepare_ohsome_boundaries.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=600 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Verify full boundary output
+        run: |
+          test -f data/intermediate/ohsome/Petropolis/petropolis_grid_1km_ohsome_boundaries.geojson
+          ls -lh data/intermediate/ohsome/Petropolis/petropolis_grid_1km_ohsome_boundaries.geojson
+
+      - name: Execute Notebook 06
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/06_build_monthly_osm_timeseries.ipynb \
+            --output 06_build_monthly_osm_timeseries.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=9000 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export executed Notebook 06 to HTML
+        if: always()
+        run: |
+          if [ -f executed_notebooks/06_build_monthly_osm_timeseries.executed.ipynb ]; then
+            jupyter nbconvert \
+              --to html \
+              executed_notebooks/06_build_monthly_osm_timeseries.executed.ipynb \
+              --output 06_build_monthly_osm_timeseries.executed.html
+          fi
+
+      - name: Collect Notebook 06 outputs
+        if: always()
+        run: |
+          mkdir -p action_outputs/processed action_outputs/raw
+          for f in \
+            data/processed/Petropolis/petropolis_ohsome_monthly_timeseries_895_cells.parquet \
+            data/processed/Petropolis/petropolis_ohsome_temporal_summary_895_cells.parquet \
+            data/processed/Petropolis/petropolis_grid_1km_with_temporal_summary.parquet; do
+            if [ -f "$f" ]; then cp "$f" action_outputs/processed/; fi
+          done
+          if [ -d data/raw/ohsome/Petropolis/monthly_timeseries_895_cells ]; then
+            cp -R data/raw/ohsome/Petropolis/monthly_timeseries_895_cells action_outputs/raw/
+          fi
+
+      - name: Upload Notebook 06 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-06-monthly-timeseries-results
+          path: |
+            executed_notebooks/
+            action_outputs/
+          if-no-files-found: warn
+          retention-days: 30
