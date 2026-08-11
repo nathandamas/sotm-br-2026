@@ -2,8 +2,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path('data/processed/Petropolis')
-OUT = Path('tables/article')
+REPO_ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPO_ROOT / 'data' / 'processed' / 'Petropolis'
+OUT = REPO_ROOT / 'tables' / 'article'
 OUT.mkdir(parents=True, exist_ok=True)
 
 FINAL_LABELS = {
@@ -64,7 +65,6 @@ def save_table(df, stem, caption, note):
     tex_path.write_text(tex, encoding='utf-8')
 
 
-# Inputs from validated Notebooks 10 and 11.
 class_summary = pd.read_csv(ROOT / 'petropolis_osm_typology_article_class_summary.csv')
 profiles = pd.read_csv(ROOT / 'petropolis_osm_typology_article_indicator_profiles.csv')
 road_tests = pd.read_csv(ROOT / 'petropolis_osm_typology_article_road_cluster_tests.csv')
@@ -73,7 +73,6 @@ spatial_global = pd.read_csv(ROOT / 'petropolis_osm_typology_article_spatial_glo
 spatial_classes = pd.read_csv(ROOT / 'petropolis_osm_typology_article_spatial_classes.csv')
 final_summary = pd.read_csv(ROOT / 'petropolis_osm_typology_final_class_summary.csv')
 
-# Table 1 — study grid and final typology composition.
 t1 = final_summary.copy()
 if 'final_typology_label' not in t1.columns:
     label_col = [c for c in t1.columns if 'label' in c.lower()][0]
@@ -98,7 +97,6 @@ save_table(t1, 'table_01_study_grid_typology_composition',
            'Study grid and final OSM mapping-regime typology composition',
            'The study grid contains 895 one-kilometre cells. Class 0 is a structural state, while Classes 1 and 2 are road-present intrinsic OSM mapping regimes.')
 
-# Table 2 — substantive class profiles, median [Q1–Q3].
 profile_vars = [
     'current_road_length_km','mapping_age_months','active_month_ratio','recent_activity_ratio',
     'persistence_index','total_contributions','total_contributor_months',
@@ -128,7 +126,6 @@ save_table(t2, 'table_02_substantive_class_profiles',
            'Substantive profiles of the three final classes',
            'Values are median [Q1–Q3] on original indicator scales. NA denotes metrics that are structurally undefined or unavailable. The no-road class is retained as a structural class rather than treated as a third modeled road-history regime.')
 
-# Table 3 — focused regime comparison. Combine road-history tests and contribution-dynamics pairwise tests.
 road_keep = [
     'peak_growth_m','positive_growth_months','growth_rate_initial_m_per_month',
     'growth_deceleration_m_per_month','time_to_90pct_months','months_since_90pct',
@@ -141,36 +138,20 @@ contrib_keep = [
 ]
 comp=[]
 for _,r in road_tests[road_tests['variable'].isin(road_keep)].iterrows():
-    comp.append({
-        'variable':r['variable'],'median_cluster_1':r['median_cluster_1'],'median_cluster_2':r['median_cluster_2'],
-        'cliffs_delta_cluster1_vs_2':r['cliffs_delta_cluster1_vs_2'],'mannwhitney_u':r['mannwhitney_u'],
-        'p_value':r['p_value'],'p_adj_bh':r['p_adj_bh']
-    })
+    comp.append({'variable':r['variable'],'median_cluster_1':r['median_cluster_1'],'median_cluster_2':r['median_cluster_2'],'cliffs_delta_cluster1_vs_2':r['cliffs_delta_cluster1_vs_2'],'mannwhitney_u':r['mannwhitney_u'],'p_value':r['p_value'],'p_adj_bh':r['p_adj_bh']})
 p12 = pairwise[(pairwise['class_a']==1)&(pairwise['class_b']==2)&(pairwise['variable'].isin(contrib_keep))]
 for _,r in p12.iterrows():
-    comp.append({
-        'variable':r['variable'],'median_cluster_1':r['median_a'],'median_cluster_2':r['median_b'],
-        'cliffs_delta_cluster1_vs_2':r['cliffs_delta_a_vs_b'],'mannwhitney_u':r['mannwhitney_u'],
-        'p_value':r['p_value'],'p_adj_bh':r['p_adj_bh']
-    })
+    comp.append({'variable':r['variable'],'median_cluster_1':r['median_a'],'median_cluster_2':r['median_b'],'cliffs_delta_cluster1_vs_2':r['cliffs_delta_a_vs_b'],'mannwhitney_u':r['mannwhitney_u'],'p_value':r['p_value'],'p_adj_bh':r['p_adj_bh']})
 t3raw=pd.DataFrame(comp).drop_duplicates('variable')
 rows=[]
 for _,r in t3raw.iterrows():
     lab,unit=DISPLAY.get(r['variable'],(r['variable'],''))
-    rows.append({
-        'Indicator':lab,'Unit':unit,
-        'Lower-intensity regime median':fmt_num(r['median_cluster_1']),
-        'Higher-intensity regime median':fmt_num(r['median_cluster_2']),
-        "Cliff's delta (lower vs higher)":fmt_num(r['cliffs_delta_cluster1_vs_2'],3),
-        'Mann–Whitney U':fmt_num(r['mannwhitney_u'],1),
-        'p':fmt_p(r['p_value']),'BH-adjusted p':fmt_p(r['p_adj_bh'])
-    })
+    rows.append({'Indicator':lab,'Unit':unit,'Lower-intensity regime median':fmt_num(r['median_cluster_1']),'Higher-intensity regime median':fmt_num(r['median_cluster_2']),"Cliff's delta (lower vs higher)":fmt_num(r['cliffs_delta_cluster1_vs_2'],3),'Mann–Whitney U':fmt_num(r['mannwhitney_u'],1),'p':fmt_p(r['p_value']),'BH-adjusted p':fmt_p(r['p_adj_bh'])})
 t3=pd.DataFrame(rows)
 save_table(t3, 'table_03_road_present_regime_comparison',
            'Focused comparison of the two road-present OSM mapping regimes',
            "Cliff's delta is oriented as lower-intensity minus higher-intensity; negative values indicate larger values in the higher-intensity expansion-pulse regime. P-values are two-sided Mann–Whitney tests, with Benjamini–Hochberg correction.")
 
-# Table 4 — spatial coherence and connectedness.
 g = spatial_global.iloc[0]
 rows=[
     {'Spatial metric':'Queen-neighbor edges','Value':int(g['n_queen_edges'])},
@@ -190,32 +171,15 @@ save_table(t4, 'table_04_spatial_coherence_summary',
            'Spatial coherence of the final typology',
            'Queen contiguity was evaluated after clustering and did not constrain the cluster solution. The empirical p-value is based on 999 random label permutations.')
 
-# Table 5 — definitions and limitations.
 t5=pd.DataFrame([
-    {
-        'Class':FINAL_LABELS[0],
-        'Operational definition':'1 km cells with no currently mapped OSM highway-line geometry in the analyzed snapshot.',
-        'Substantive interpretation':'Structural map state; road-history indicators tied to current mapped-road presence can be undefined.',
-        'Key limitation':'Does not imply physical absence of roads and is not an OSM incompleteness class.'
-    },
-    {
-        'Class':FINAL_LABELS[1],
-        'Operational definition':'Road-present cells assigned to the larger k-means cluster after robust preprocessing of non-redundant intrinsic OSM-history indicators.',
-        'Substantive interpretation':'Lower median mapped-road length and historical contribution intensity, with a comparatively longer intrinsic plateau.',
-        'Key limitation':'A relative intrinsic history regime; not a class of completeness, positional accuracy, or external data quality.'
-    },
-    {
-        'Class':FINAL_LABELS[2],
-        'Operational definition':'Road-present cells assigned to the smaller k-means cluster after the same validated preprocessing and model selection.',
-        'Substantive interpretation':'Higher mapped-road and contribution intensity, with stronger expansion pulses followed by pronounced deceleration.',
-        'Key limitation':'A relative intrinsic history regime; it does not establish superior mapping quality or real-world infrastructure density.'
-    }
+    {'Class':FINAL_LABELS[0],'Operational definition':'1 km cells with no currently mapped OSM highway-line geometry in the analyzed snapshot.','Substantive interpretation':'Structural map state; road-history indicators tied to current mapped-road presence can be undefined.','Key limitation':'Does not imply physical absence of roads and is not an OSM incompleteness class.'},
+    {'Class':FINAL_LABELS[1],'Operational definition':'Road-present cells assigned to the larger k-means cluster after robust preprocessing of non-redundant intrinsic OSM-history indicators.','Substantive interpretation':'Lower median mapped-road length and historical contribution intensity, with a comparatively longer intrinsic plateau.','Key limitation':'A relative intrinsic history regime; not a class of completeness, positional accuracy, or external data quality.'},
+    {'Class':FINAL_LABELS[2],'Operational definition':'Road-present cells assigned to the smaller k-means cluster after the same validated preprocessing and model selection.','Substantive interpretation':'Higher mapped-road and contribution intensity, with stronger expansion pulses followed by pronounced deceleration.','Key limitation':'A relative intrinsic history regime; it does not establish superior mapping quality or real-world infrastructure density.'}
 ])
 save_table(t5, 'table_05_class_definitions_and_limitations',
            'Definitions, substantive interpretation, and limitations of the final classes',
            'All labels describe intrinsic OpenStreetMap mapping histories within this study. They are not external validation classes and should not be described as completeness or accuracy categories.')
 
-# Quality checks.
 checks = pd.DataFrame([
     ('table_1_total_895', int(t1.iloc[:-1]['Cells'].sum()) == 895),
     ('table_1_three_classes', len(t1)-1 == 3),
