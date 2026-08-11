@@ -19,24 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Move article figures and tables
-        run: |
-          set -euo pipefail
-          mkdir -p data/output/figures data/output/tables
-
-          if [ -d figures/article ]; then
-            find figures/article -maxdepth 1 -type f -print0 | xargs -0 -r -I{} git mv "{}" data/output/figures/
-            rmdir figures/article || true
-            rmdir figures 2>/dev/null || true
-          fi
-
-          if [ -d tables/article ]; then
-            find tables/article -maxdepth 1 -type f -print0 | xargs -0 -r -I{} git mv "{}" data/output/tables/
-            rmdir tables/article || true
-            rmdir tables 2>/dev/null || true
-          fi
-
-      - name: Update output-path references
+      - name: Update script and notebook output-path references
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -50,8 +33,6 @@ jobs:
               Path('scripts/notebook13_build_article_tables.py'),
               Path('notebooks/12_build_article_maps.ipynb'),
               Path('notebooks/13_build_article_tables.ipynb'),
-              Path('.github/workflows/run-notebook-12.yml'),
-              Path('.github/workflows/run-notebook-13.yml'),
           ]
           for path in candidates:
               if not path.exists():
@@ -72,21 +53,18 @@ jobs:
           test -d data/output/tables
           test "$(find data/output/figures -maxdepth 1 -type f | wc -l)" -ge 17
           test "$(find data/output/tables -maxdepth 1 -type f | wc -l)" -ge 17
-          ! test -d figures/article
-          ! test -d tables/article
-          echo 'Figures:'
-          find data/output/figures -maxdepth 1 -type f -printf '%f\n' | sort
-          echo 'Tables:'
-          find data/output/tables -maxdepth 1 -type f -printf '%f\n' | sort
+          ! test -d figures
+          ! test -d tables
+          ! grep -R "figures/article\|tables/article" scripts/notebook12_build_article_maps.py scripts/notebook13_build_article_tables.py notebooks/12_build_article_maps.ipynb notebooks/13_build_article_tables.ipynb
 
-      - name: Commit reorganized outputs
+      - name: Commit updated references
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
+          git add scripts/notebook12_build_article_maps.py scripts/notebook13_build_article_tables.py notebooks/12_build_article_maps.ipynb notebooks/13_build_article_tables.ipynb
           if git diff --cached --quiet; then
-            echo 'No changes to commit.'
+            echo 'No reference changes to commit.'
           else
-            git commit -m 'Reorganize article outputs under data/output'
+            git commit -m 'Update article output paths'
             git push origin main
           fi
