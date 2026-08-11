@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/run-notebook-07.yml'
       - 'notebooks/07_build_osm_maturity_indicators.ipynb'
+      - 'scripts/validate_notebook07_outputs.py'
 
 jobs:
   execute-notebook-07:
@@ -58,6 +59,10 @@ jobs:
             --output-dir executed_notebooks \
             --ExecutePreprocessor.timeout=1200 \
             --ExecutePreprocessor.kernel_name=python3
+
+      - name: Validate and fully document Notebook 07 outputs
+        run: |
+          python scripts/validate_notebook07_outputs.py
 
       - name: Export executed Notebook 07 to HTML
         if: always()
