@@ -1,0 +1,100 @@
+name: Run Notebook 08
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-notebook-08.yml'
+      - 'notebooks/08_explore_osm_indicator_structure.ipynb'
+      - 'scripts/notebook08_explore_indicator_structure.py'
+
+jobs:
+  execute-notebook-08:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely matplotlib scipy scikit-learn libpysal esda jupyter nbconvert ipykernel
+
+      - name: Restore Notebook 07 outputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31448678368
+          artifact-ids: 9085509780
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb07
+
+      - name: Restore processed input paths
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb07/notebook-07-maturity-indicators-results/action_outputs/processed/petropolis_osm_maturity_indicators_895_cells.parquet \
+             data/processed/Petropolis/petropolis_osm_maturity_indicators_895_cells.parquet
+          cp restored_nb07/notebook-07-maturity-indicators-results/action_outputs/processed/petropolis_grid_1km_with_maturity_indicators.parquet \
+             data/processed/Petropolis/petropolis_grid_1km_with_maturity_indicators.parquet
+          cp restored_nb07/notebook-07-maturity-indicators-results/action_outputs/processed/petropolis_osm_maturity_indicator_dictionary.csv \
+             data/processed/Petropolis/petropolis_osm_maturity_indicator_dictionary.csv
+          ls -lh data/processed/Petropolis/
+
+      - name: Execute Notebook 08
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/08_explore_osm_indicator_structure.ipynb \
+            --output 08_explore_osm_indicator_structure.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=1200 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export executed Notebook 08 to HTML
+        if: always()
+        run: |
+          if [ -f executed_notebooks/08_explore_osm_indicator_structure.executed.ipynb ]; then
+            jupyter nbconvert \
+              --to html \
+              executed_notebooks/08_explore_osm_indicator_structure.executed.ipynb \
+              --output 08_explore_osm_indicator_structure.executed.html
+          fi
+
+      - name: Collect Notebook 08 outputs
+        if: always()
+        run: |
+          mkdir -p action_outputs/processed
+          for f in \
+            data/processed/Petropolis/petropolis_osm_indicator_feature_matrix_895_cells.parquet \
+            data/processed/Petropolis/petropolis_osm_pca_loadings.csv \
+            data/processed/Petropolis/petropolis_osm_pca_explained_variance.csv \
+            data/processed/Petropolis/petropolis_osm_spearman_correlation.csv \
+            data/processed/Petropolis/petropolis_osm_strong_redundancy_pairs.csv \
+            data/processed/Petropolis/petropolis_osm_global_moran.csv \
+            data/processed/Petropolis/petropolis_osm_indicator_distribution_diagnostics.csv \
+            data/processed/Petropolis/petropolis_osm_pca_imputation_diagnostics.csv; do
+            if [ -f "$f" ]; then cp "$f" action_outputs/processed/; fi
+          done
+
+      - name: Upload Notebook 08 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-08-indicator-structure-results
+          path: |
+            executed_notebooks/
+            action_outputs/
+          if-no-files-found: warn
+          retention-days: 30
