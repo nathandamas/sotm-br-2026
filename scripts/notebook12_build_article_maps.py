@@ -14,7 +14,7 @@ import contextily as cx
 ROOT = Path.cwd()
 while not (ROOT / 'notebooks').exists() and ROOT.parent != ROOT:
     ROOT = ROOT.parent
-OUT = ROOT / 'figures' / 'article'
+OUT = ROOT / 'data' / 'output' / 'figures'
 OUT.mkdir(parents=True, exist_ok=True)
 INPUT = ROOT / 'data' / 'processed' / 'Petropolis' / 'petropolis_grid_1km_with_osm_typology_final.parquet'
 if not INPUT.exists():
