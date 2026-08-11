@@ -1,0 +1,92 @@
+name: Reorganize article outputs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/reorganize-article-outputs.yml'
+
+jobs:
+  reorganize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move article figures and tables
+        run: |
+          set -euo pipefail
+          mkdir -p data/output/figures data/output/tables
+
+          if [ -d figures/article ]; then
+            find figures/article -maxdepth 1 -type f -print0 | xargs -0 -r -I{} git mv "{}" data/output/figures/
+            rmdir figures/article || true
+            rmdir figures 2>/dev/null || true
+          fi
+
+          if [ -d tables/article ]; then
+            find tables/article -maxdepth 1 -type f -print0 | xargs -0 -r -I{} git mv "{}" data/output/tables/
+            rmdir tables/article || true
+            rmdir tables 2>/dev/null || true
+          fi
+
+      - name: Update output-path references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'figures/article': 'data/output/figures',
+              'tables/article': 'data/output/tables',
+          }
+          candidates = [
+              Path('scripts/notebook12_build_article_maps.py'),
+              Path('scripts/notebook13_build_article_tables.py'),
+              Path('notebooks/12_build_article_maps.ipynb'),
+              Path('notebooks/13_build_article_tables.ipynb'),
+              Path('.github/workflows/run-notebook-12.yml'),
+              Path('.github/workflows/run-notebook-13.yml'),
+          ]
+          for path in candidates:
+              if not path.exists():
+                  continue
+              text = path.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  print('Updated', path)
+          PY
+
+      - name: Validate new structure
+        run: |
+          set -euo pipefail
+          test -d data/output/figures
+          test -d data/output/tables
+          test "$(find data/output/figures -maxdepth 1 -type f | wc -l)" -ge 17
+          test "$(find data/output/tables -maxdepth 1 -type f | wc -l)" -ge 17
+          ! test -d figures/article
+          ! test -d tables/article
+          echo 'Figures:'
+          find data/output/figures -maxdepth 1 -type f -printf '%f\n' | sort
+          echo 'Tables:'
+          find data/output/tables -maxdepth 1 -type f -printf '%f\n' | sort
+
+      - name: Commit reorganized outputs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+          else
+            git commit -m 'Reorganize article outputs under data/output'
+            git push origin main
+          fi
