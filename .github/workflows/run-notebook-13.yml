@@ -72,15 +72,15 @@ jobs:
 
       - name: Validate generated tables
         run: |
-          test -f tables/article/table_01_study_grid_typology_composition.csv
-          test -f tables/article/table_02_substantive_class_profiles.csv
-          test -f tables/article/table_03_road_present_regime_comparison.csv
-          test -f tables/article/table_04_spatial_coherence_summary.csv
-          test -f tables/article/table_05_class_definitions_and_limitations.csv
-          test -f tables/article/table_quality_checks.csv
+          test -f data/output/tables/table_01_study_grid_typology_composition.csv
+          test -f data/output/tables/table_02_substantive_class_profiles.csv
+          test -f data/output/tables/table_03_road_present_regime_comparison.csv
+          test -f data/output/tables/table_04_spatial_coherence_summary.csv
+          test -f data/output/tables/table_05_class_definitions_and_limitations.csv
+          test -f data/output/tables/table_quality_checks.csv
           python - <<'PY'
           import pandas as pd
-          q = pd.read_csv('tables/article/table_quality_checks.csv')
+          q = pd.read_csv('data/output/tables/table_quality_checks.csv')
           assert (q['status'] == 'PASS').all(), q
           print(q.to_string(index=False))
           PY
@@ -89,7 +89,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tables/article/
+          git add data/output/tables/
           if git diff --cached --quiet; then
             echo 'No table changes to commit.'
           else
@@ -103,5 +103,5 @@ jobs:
           name: notebook-13-article-tables
           path: |
             executed_notebooks/
-            tables/article/
+            data/output/tables/
           retention-days: 30
