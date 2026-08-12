@@ -79,3 +79,5 @@ jobs:
             executed_notebooks/
             data/output/figures/
           retention-days: 30
+
+# Trigger-only comment: panel typography and source-text regeneration.
