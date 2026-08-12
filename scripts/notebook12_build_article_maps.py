@@ -278,6 +278,8 @@ def draw_location_panel(ax):
     # country is visually dominant, as in the approved reference. Brazilian
     # state boundaries are shown to reproduce the requested contextual detail.
     m = ax.inset_axes([0.055, 0.245, 0.89, 0.665])
+    # Ocean background for the locator only; land polygons are drawn above it.
+    m.set_facecolor("#9ecae1")
     SOUTH_AMERICA.plot(
         ax=m, facecolor="#f0f0f0", edgecolor="#a3a3a3", linewidth=0.55, zorder=1,
     )
