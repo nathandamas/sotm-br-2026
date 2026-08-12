@@ -45,11 +45,12 @@ g_display["geometry"] = g_display.geometry.intersection(muni_geom)
 g_display = g_display.loc[~g_display.geometry.is_empty].copy()
 
 DATA_SOURCE_LINES = [
-    "OpenStreetMap road history via ohsome API",
-    "1 km reference grid derived from IBGE source grid",
-    "Municipal boundary: IBGE (2025)",
+    "OpenStreetMap (osm.org) – vector data\n  (snapshot dated 2025-05-24)",
+    "ohsome API – contribution history",
+    "1 km reference grid",
+    "Municipal boundary: IBGE (2022)",
 ]
-BASEMAP_LINES = ["CARTO Positron", "© OpenStreetMap contributors, © CARTO"]
+BASEMAP_LINES = ["CARTO Positron (© OpenStreetMap contributors,\n© CARTO)"]
 CRS_LINES = [
     "Coordinate System: SIRGAS 2000",
     "Projection: UTM Zone 23S (EPSG:31983)",
@@ -268,7 +269,7 @@ def draw_location_panel(ax):
     style_box(ax)
     ax.text(
         0.5, 0.965, "LOCATION", transform=ax.transAxes,
-        ha="center", va="top", fontsize=14, fontweight="bold",
+        ha="center", va="top", fontsize=10.8, fontweight="bold",
     )
 
     # Crop the locator to the part of South America surrounding Brazil so the
@@ -318,32 +319,33 @@ def draw_sources_panel(ax):
     style_box(ax)
     ax.text(
         0.055, 0.92, "DATA SOURCES", transform=ax.transAxes,
-        ha="left", va="top", fontsize=13.5, fontweight="bold",
+        ha="left", va="top", fontsize=10.8, fontweight="bold",
     )
     ax.text(
-        0.065, 0.75, f"• {DATA_SOURCE_LINES[0]}",
-        transform=ax.transAxes, ha="left", va="top", fontsize=10.1,
+        0.065, 0.78, f"• {DATA_SOURCE_LINES[0]}",
+        transform=ax.transAxes, ha="left", va="top",
+        fontsize=8.7, linespacing=1.08,
     )
     ax.text(
-        0.065, 0.60, "• 1 km reference grid derived from IBGE\n  source grid",
-        transform=ax.transAxes, ha="left", va="top", fontsize=10.1, linespacing=1.12,
+        0.065, 0.60, f"• {DATA_SOURCE_LINES[1]}",
+        transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
     )
     ax.text(
-        0.065, 0.39, f"• {DATA_SOURCE_LINES[2]}",
-        transform=ax.transAxes, ha="left", va="top", fontsize=10.1,
+        0.065, 0.49, f"• {DATA_SOURCE_LINES[2]}",
+        transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
+    )
+    ax.text(
+        0.065, 0.38, f"• {DATA_SOURCE_LINES[3]}",
+        transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
     )
 
     ax.text(
-        0.055, 0.255, "BASEMAP", transform=ax.transAxes,
-        ha="left", va="top", fontsize=13.0, fontweight="bold",
+        0.055, 0.25, "BASEMAP", transform=ax.transAxes,
+        ha="left", va="top", fontsize=10.8, fontweight="bold",
     )
     ax.text(
-        0.065, 0.145, BASEMAP_LINES[0], transform=ax.transAxes,
-        ha="left", va="top", fontsize=10.1,
-    )
-    ax.text(
-        0.065, 0.035, BASEMAP_LINES[1], transform=ax.transAxes,
-        ha="left", va="bottom", fontsize=9.4,
+        0.065, 0.13, BASEMAP_LINES[0], transform=ax.transAxes,
+        ha="left", va="top", fontsize=8.7, linespacing=1.08,
     )
 
 
@@ -365,7 +367,7 @@ def draw_typology_legend(ax):
     style_box(ax)
     ax.text(
         0.055, 0.95, "LEGEND", transform=ax.transAxes,
-        ha="left", va="top", fontsize=13.5, fontweight="bold",
+        ha="left", va="top", fontsize=10.8, fontweight="bold",
     )
     add_boundary_legend(ax)
     ax.text(
@@ -413,7 +415,7 @@ def make_continuous_legend(column, label, log=False):
         style_box(ax)
         ax.text(
             0.055, 0.95, "LEGEND", transform=ax.transAxes,
-            ha="left", va="top", fontsize=13.5, fontweight="bold",
+            ha="left", va="top", fontsize=10.8, fontweight="bold",
         )
         add_boundary_legend(ax)
         ax.text(
