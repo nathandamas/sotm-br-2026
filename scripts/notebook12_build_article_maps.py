@@ -45,12 +45,15 @@ g_display["geometry"] = g_display.geometry.intersection(muni_geom)
 g_display = g_display.loc[~g_display.geometry.is_empty].copy()
 
 DATA_SOURCE_LINES = [
-    "OpenStreetMap (osm.org) – vector data\n  (snapshot dated 2025-05-24)",
-    "ohsome API – contribution history",
-    "1 km reference grid",
-    "Municipal boundary: IBGE (2022)",
+    "OpenStreetMap road history via ohsome API",
+    "1 km reference grid derived from IBGE
+  source grid",
+    "Municipal boundary: IBGE (2025)",
 ]
-BASEMAP_LINES = ["CARTO Positron (© OpenStreetMap contributors,\n© CARTO)"]
+BASEMAP_LINES = [
+    "CARTO Positron",
+    "(© OpenStreetMap contributors, © CARTO)",
+]
 CRS_LINES = [
     "Coordinate System: SIRGAS 2000",
     "Projection: UTM Zone 23S (EPSG:31983)",
@@ -285,7 +288,7 @@ def draw_location_panel(ax):
     BRAZIL_STATES.boundary.plot(ax=m, color="#9a9a9a", linewidth=0.42, zorder=3)
     m.set_xlim(-82.0, -34.0)
     m.set_ylim(-36.0, 7.0)
-    m.set_aspect("equal", adjustable="box")
+    m.set_aspect("equal", adjustable="datalim")
 
     m.scatter(
         [CITY_LON], [CITY_LAT], marker="o", s=56,
@@ -323,19 +326,15 @@ def draw_sources_panel(ax):
     )
     ax.text(
         0.065, 0.78, f"• {DATA_SOURCE_LINES[0]}",
+        transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
+    )
+    ax.text(
+        0.065, 0.60, f"• {DATA_SOURCE_LINES[1]}",
         transform=ax.transAxes, ha="left", va="top",
         fontsize=8.7, linespacing=1.08,
     )
     ax.text(
-        0.065, 0.60, f"• {DATA_SOURCE_LINES[1]}",
-        transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
-    )
-    ax.text(
-        0.065, 0.49, f"• {DATA_SOURCE_LINES[2]}",
-        transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
-    )
-    ax.text(
-        0.065, 0.38, f"• {DATA_SOURCE_LINES[3]}",
+        0.065, 0.39, f"• {DATA_SOURCE_LINES[2]}",
         transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
     )
 
@@ -345,7 +344,11 @@ def draw_sources_panel(ax):
     )
     ax.text(
         0.065, 0.13, BASEMAP_LINES[0], transform=ax.transAxes,
-        ha="left", va="top", fontsize=8.7, linespacing=1.08,
+        ha="left", va="top", fontsize=8.7,
+    )
+    ax.text(
+        0.065, 0.055, BASEMAP_LINES[1], transform=ax.transAxes,
+        ha="left", va="top", fontsize=8.7,
     )
 
 
