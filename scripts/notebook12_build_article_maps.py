@@ -231,7 +231,7 @@ def load_locator_layers():
     )
     states_url = (
         "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/"
-        "master/geojson/ne_110m_admin_1_states_provinces.geojson"
+        "master/geojson/ne_50m_admin_1_states_provinces.geojson"
     )
     world = gpd.read_file(countries_url)
     continent_col = "CONTINENT" if "CONTINENT" in world.columns else "continent"
@@ -247,12 +247,17 @@ def load_locator_layers():
         raise RuntimeError("Brazil was not found in Natural Earth countries.")
 
     states = gpd.read_file(states_url).to_crs(WGS84)
-    state_admin_col = next((c for c in ("admin", "ADMIN", "adm0_name", "geonunit") if c in states.columns), None)
-    if state_admin_col is None:
-        raise RuntimeError("Natural Earth admin-1 country field was not found.")
-    brazil_states = states[states[state_admin_col].astype(str).str.lower().eq("brazil")].copy()
+    state_mask = pd.Series(False, index=states.index)
+    for col in ("admin", "ADMIN", "adm0_name", "geonunit", "adm0_a3", "sov_a3", "iso_a2"):
+        if col in states.columns:
+            values = states[col].astype(str).str.strip().str.lower()
+            state_mask |= values.eq("brazil") | values.eq("bra") | values.eq("br")
+    brazil_states = states[state_mask].copy()
     if brazil_states.empty:
-        raise RuntimeError("Brazilian states were not found in Natural Earth admin-1 data.")
+        raise RuntimeError(
+            "Brazilian states were not found in Natural Earth 50m admin-1 data. "
+            f"Available columns: {list(states.columns)}"
+        )
     return south, brazil, brazil_states
 
 
@@ -267,7 +272,7 @@ def draw_location_panel(ax):
     )
 
     # Crop the locator to the part of South America surrounding Brazil so the
-    # country is visually dominant, as in the approved reference.  Brazilian
+    # country is visually dominant, as in the approved reference. Brazilian
     # state boundaries are shown to reproduce the requested contextual detail.
     m = ax.inset_axes([0.055, 0.245, 0.89, 0.665])
     SOUTH_AMERICA.plot(
