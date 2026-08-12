@@ -9,9 +9,9 @@ pattern_constants = re.compile(
     r'DATA_SOURCE_LINES = \[.*?\]\nBASEMAP_LINES = \[.*?\]\nCRS_LINES = \[',
     re.S,
 )
-new_constants = '''DATA_SOURCE_LINES = [
+new_constants = r'''DATA_SOURCE_LINES = [
     "OpenStreetMap road history via ohsome API",
-    "1 km reference grid derived from IBGE\\n  source grid",
+    "1 km reference grid derived from IBGE\n  source grid",
     "Municipal boundary: IBGE (2025)",
 ]
 BASEMAP_LINES = [
@@ -19,15 +19,18 @@ BASEMAP_LINES = [
     "(© OpenStreetMap contributors, © CARTO)",
 ]
 CRS_LINES = ['''
-text, n = pattern_constants.subn(new_constants, text, count=1)
+text, n = pattern_constants.subn(lambda m: new_constants, text, count=1)
 if n != 1:
     raise RuntimeError(f"Expected one DATA_SOURCE_LINES/BASEMAP_LINES block, replaced {n}")
 
-old_aspect = '    m.set_aspect("equal", adjustable="box")\n'
-new_aspect = '    m.set_aspect("equal", adjustable="datalim")\n'
-if old_aspect not in text:
+if 'm.set_aspect("equal", adjustable="box")' in text:
+    text = text.replace(
+        'm.set_aspect("equal", adjustable="box")',
+        'm.set_aspect("equal", adjustable="datalim")',
+        1,
+    )
+elif 'm.set_aspect("equal", adjustable="datalim")' not in text:
     raise RuntimeError("Expected locator aspect statement not found")
-text = text.replace(old_aspect, new_aspect, 1)
 
 pattern_sources = re.compile(r'def draw_sources_panel\(ax\):\n.*?\n\ndef add_boundary_legend\(ax\):', re.S)
 new_sources = '''def draw_sources_panel(ax):
@@ -65,12 +68,9 @@ new_sources = '''def draw_sources_panel(ax):
 
 
 def add_boundary_legend(ax):'''
-text, n = pattern_sources.subn(new_sources, text, count=1)
+text, n = pattern_sources.subn(lambda m: new_sources, text, count=1)
 if n != 1:
     raise RuntimeError(f"Expected one draw_sources_panel function, replaced {n}")
-
-if text == original:
-    raise RuntimeError("No changes were applied")
 
 path.write_text(text, encoding="utf-8")
 print("Applied only the requested locator-frame and source/basemap text changes.")
