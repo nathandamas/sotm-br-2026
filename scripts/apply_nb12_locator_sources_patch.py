@@ -5,27 +5,23 @@ path = Path("scripts/notebook12_build_article_maps.py")
 text = path.read_text(encoding="utf-8")
 original = text
 
-old_constants = '''DATA_SOURCE_LINES = [
-    "OpenStreetMap (osm.org) – vector data\n  (snapshot dated 2025-05-24)",
-    "ohsome API – contribution history",
-    "1 km reference grid",
-    "Municipal boundary: IBGE (2022)",
-]
-BASEMAP_LINES = ["CARTO Positron (© OpenStreetMap contributors,\n© CARTO)"]
-'''
+pattern_constants = re.compile(
+    r'DATA_SOURCE_LINES = \[.*?\]\nBASEMAP_LINES = \[.*?\]\nCRS_LINES = \[',
+    re.S,
+)
 new_constants = '''DATA_SOURCE_LINES = [
     "OpenStreetMap road history via ohsome API",
-    "1 km reference grid derived from IBGE\n  source grid",
+    "1 km reference grid derived from IBGE\\n  source grid",
     "Municipal boundary: IBGE (2025)",
 ]
 BASEMAP_LINES = [
     "CARTO Positron",
     "(© OpenStreetMap contributors, © CARTO)",
 ]
-'''
-if old_constants not in text:
-    raise RuntimeError("Expected current DATA_SOURCE_LINES/BASEMAP_LINES block not found")
-text = text.replace(old_constants, new_constants, 1)
+CRS_LINES = ['''
+text, n = pattern_constants.subn(new_constants, text, count=1)
+if n != 1:
+    raise RuntimeError(f"Expected one DATA_SOURCE_LINES/BASEMAP_LINES block, replaced {n}")
 
 old_aspect = '    m.set_aspect("equal", adjustable="box")\n'
 new_aspect = '    m.set_aspect("equal", adjustable="datalim")\n'
