@@ -211,8 +211,9 @@ def draw_sources_panel(ax):
 
 
 def add_boundary_legend(ax):
-    ax.add_patch(Rectangle((0.060,0.815),0.105,0.085,transform=ax.transAxes,facecolor="white",edgecolor="black",linewidth=1.8))
-    ax.text(0.20,0.858,"Petrópolis municipal boundary",transform=ax.transAxes,ha="left",va="center",fontsize=10.5)
+    # Keep the municipal-boundary symbol visually separate from the LEGEND heading.
+    ax.add_patch(Rectangle((0.060,0.785),0.105,0.070,transform=ax.transAxes,facecolor="white",edgecolor="black",linewidth=1.8))
+    ax.text(0.20,0.820,"Petrópolis municipal boundary",transform=ax.transAxes,ha="left",va="center",fontsize=10.5)
 
 
 def draw_typology_legend(ax):
