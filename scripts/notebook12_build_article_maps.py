@@ -46,8 +46,7 @@ g_display = g_display.loc[~g_display.geometry.is_empty].copy()
 
 DATA_SOURCE_LINES = [
     "OpenStreetMap road history via ohsome API",
-    "1 km reference grid derived from IBGE
-  source grid",
+    "1 km reference grid derived from IBGE\n  source grid",
     "Municipal boundary: IBGE (2025)",
 ]
 BASEMAP_LINES = [
