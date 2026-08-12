@@ -74,17 +74,11 @@ text, n = pattern_sources.subn(new_sources, text, count=1)
 if n != 1:
     raise RuntimeError(f"Expected one draw_sources_panel function, replaced {n}")
 
-old_legend_heading = '''            ha="left", va="top", fontsize=13.5, fontweight="bold",
-'''
-# Two remaining instances correspond to LEGEND headings: typology + continuous legends.
-count = text.count(old_legend_heading)
+legend_style = 'fontsize=13.5, fontweight="bold"'
+count = text.count(legend_style)
 if count != 2:
-    raise RuntimeError(f"Expected exactly two LEGEND heading style occurrences, found {count}")
-text = text.replace(
-    old_legend_heading,
-    '''            ha="left", va="top", fontsize=10.8, fontweight="bold",
-''',
-)
+    raise RuntimeError(f"Expected exactly two remaining LEGEND heading sizes, found {count}")
+text = text.replace(legend_style, 'fontsize=10.8, fontweight="bold"')
 
 if text == original:
     raise RuntimeError("No changes were applied")
