@@ -1,0 +1,112 @@
+name: Run Notebook 14
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'notebooks/14_query_unique_contributors.ipynb'
+      - 'scripts/notebook14_query_unique_contributors.py'
+      - '.github/workflows/run-notebook-14.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  execute-notebook-14:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely matplotlib contextily xyzservices pyproj rasterio requests jupyter nbconvert ipykernel
+
+      - name: Restore Notebook 11 final GeoParquet
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31486390648
+          artifact-ids: 9099287431
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb11
+
+      - name: Install final GeoParquet for map production
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb11/notebook-11-final-osm-typology-results/action_outputs/processed/petropolis_grid_1km_with_osm_typology_final.parquet data/processed/Petropolis/
+
+      - name: Execute Notebook 14 contributor query
+        run: |
+          mkdir -p executed_notebooks
+          jupyter nbconvert --to notebook --execute notebooks/14_query_unique_contributors.ipynb \
+            --output 14_query_unique_contributors.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=2400 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Export Notebook 14 to HTML
+        run: |
+          jupyter nbconvert --to html executed_notebooks/14_query_unique_contributors.executed.ipynb \
+            --output 14_query_unique_contributors.executed.html
+
+      - name: Regenerate article maps with contributor metrics
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/12_build_article_maps.ipynb \
+            --output 12_build_article_maps.with_contributors.executed.ipynb \
+            --output-dir executed_notebooks \
+            --ExecutePreprocessor.timeout=1800 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Validate new maps
+        run: |
+          test -f data/output/figures/figure_09_unique_osm_contributors.png
+          test -f data/output/figures/figure_09_unique_osm_contributors.pdf
+          test -f data/output/figures/figure_10_unique_road_contributors.png
+          test -f data/output/figures/figure_10_unique_road_contributors.pdf
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          p = Path('data/output/notebooks/14/petropolis_unique_contributors_895_cells.parquet')
+          df = pd.read_parquet(p)
+          assert len(df) == 895
+          assert df['grid_1km_id'].astype(str).is_unique
+          assert (df['all_unique_contributors_count'] >= df['road_unique_contributors_count']).all()
+          qc = pd.read_csv('data/output/notebooks/14/unique_contributors_quality_checks.csv')
+          assert (qc['status'] == 'PASS').all(), qc
+          print(pd.read_csv('data/output/notebooks/14/unique_contributors_summary.csv').to_string(index=False))
+          PY
+
+      - name: Commit contributor results and figures
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/output/notebooks/14/ data/output/figures/
+          if git diff --cached --quiet; then
+            echo 'No contributor-result changes to commit.'
+          else
+            git commit -m 'Add unique contributor maps and metrics'
+            git push origin main
+          fi
+
+      - name: Upload Notebook 14 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-14-unique-contributor-maps
+          path: |
+            executed_notebooks/
+            data/output/notebooks/14/
+            data/output/figures/
+            data/raw/ohsome/Petropolis/all_unique_contributors_895_cells/
+          retention-days: 30
