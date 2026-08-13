@@ -1,0 +1,78 @@
+name: Test ohsome all-users single cell
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-ohsome-all-users-single-cell.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-single-cell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install minimal dependencies
+        run: pip install requests pandas pyarrow
+      - name: Query one representative 1 km cell
+        run: |
+          python - <<'PY'
+          import json, time
+          from pathlib import Path
+          import pandas as pd
+          import requests
+
+          root = Path('.')
+          nb05 = root / 'data/output/notebooks/05/notebook-05-ohsome-production-results/production_outputs'
+          road = pd.read_parquet(nb05 / 'petropolis_ohsome_895_cells.parquet')
+          road['grid_1km_id'] = road['grid_1km_id'].astype(str)
+          road['contributors_count'] = pd.to_numeric(road['contributors_count'], errors='coerce')
+          # Representative cell: closest road-contributor count to the dataset median.
+          med = float(road['contributors_count'].median())
+          idx = (road['contributors_count'] - med).abs().idxmin()
+          row = road.loc[idx]
+          gid = str(row['grid_1km_id'])
+          from_values = road['contributors_count_from'].dropna().astype(str).unique().tolist()
+          to_values = road['contributors_count_to'].dropna().astype(str).unique().tolist()
+          assert len(from_values) == 1 and len(to_values) == 1
+          interval = f"{from_values[0]}/{to_values[0]}"
+
+          fc = json.loads((nb05 / 'petropolis_grid_1km_ohsome_boundaries.geojson').read_text())
+          feature = next(f for f in fc['features'] if str(f['properties']['id']) == gid)
+          one = {'type':'FeatureCollection','features':[feature]}
+          data = {'bpolys': json.dumps(one,separators=(',',':')), 'time': interval, 'format':'json'}
+          url = 'https://api.ohsome.org/v1/users/count/groupBy/boundary'
+          print('grid_1km_id=', gid)
+          print('road_contributors=', row['contributors_count'])
+          print('median_road_contributors=', med)
+          print('interval=', interval)
+          t0=time.time()
+          try:
+              r=requests.post(url,data=data,headers={'User-Agent':'sotm-br-2026-research/0.7'},timeout=150)
+          except Exception as e:
+              print('transport_error=',type(e).__name__,str(e))
+              raise SystemExit(75)
+          print('elapsed_s=',round(time.time()-t0,2))
+          print('http_status=',r.status_code)
+          print('content_type=',r.headers.get('content-type'))
+          print('body=',r.text[:3000])
+          if r.status_code in {429,500,502,503,504}:
+              raise SystemExit(75)
+          r.raise_for_status()
+          body=r.json()
+          groups=body.get('groupByResult')
+          assert isinstance(groups,list) and len(groups)==1
+          g=groups[0]
+          assert str(g.get('groupByObject'))==gid
+          result=g.get('result')
+          assert isinstance(result,list) and len(result)==1
+          item=result[0]
+          assert 'value' in item and 'fromTimestamp' in item and 'toTimestamp' in item
+          print('VALID_SINGLE_CELL all_unique_contributors_count=',item['value'])
+          PY
