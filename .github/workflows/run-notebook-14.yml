@@ -110,3 +110,5 @@ jobs:
             data/output/figures/
             data/raw/ohsome/Petropolis/all_unique_contributors_895_cells/
           retention-days: 30
+
+# Trigger: rerun after reducing contributor batches and adding transport retries.
