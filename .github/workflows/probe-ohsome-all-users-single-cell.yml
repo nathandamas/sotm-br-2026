@@ -1,0 +1,86 @@
+name: Probe ohsome all-feature unique users single cell
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-ohsome-all-users-single-cell.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install minimal dependencies
+        run: pip install pandas pyarrow requests
+      - name: Probe exact no-filter metric on one representative cell
+        run: |
+          python - <<'PY'
+          import json
+          import time
+          from pathlib import Path
+          import pandas as pd
+          import requests
+
+          base = Path('data/output/notebooks/05/notebook-05-ohsome-production-results/production_outputs')
+          metrics = pd.read_parquet(base / 'petropolis_ohsome_895_cells.parquet')
+          metrics['grid_1km_id'] = metrics['grid_1km_id'].astype(str)
+          # Representative cell: road-contributor count nearest the sample median.
+          c = pd.to_numeric(metrics['contributors_count'], errors='coerce')
+          med = c.median()
+          idx = (c - med).abs().idxmin()
+          row = metrics.loc[idx]
+          cell_id = str(row['grid_1km_id'])
+          from_ts = str(row['contributors_count_from'])
+          to_ts = str(row['contributors_count_to'])
+          if metrics['contributors_count_from'].astype(str).nunique() != 1 or metrics['contributors_count_to'].astype(str).nunique() != 1:
+              raise RuntimeError('Notebook 05 contributor interval is not globally frozen.')
+
+          fc = json.loads((base / 'petropolis_grid_1km_ohsome_boundaries.geojson').read_text(encoding='utf-8'))
+          feature = next(f for f in fc['features'] if str(f.get('properties', {}).get('id')) == cell_id)
+          one = {'type': 'FeatureCollection', 'features': [feature]}
+          data = {
+              'bpolys': json.dumps(one, ensure_ascii=False, separators=(',', ':')),
+              'time': f'{from_ts}/{to_ts}',
+              'format': 'json',
+          }
+          url = 'https://api.ohsome.org/v1/users/count/groupBy/boundary'
+          print('PROBE_CELL_ID=', cell_id)
+          print('ROAD_CONTRIBUTORS=', row['contributors_count'])
+          print('FROZEN_INTERVAL=', data['time'])
+          print('FILTER=NONE')
+          t0 = time.monotonic()
+          try:
+              r = requests.post(url, data=data, timeout=180, headers={'User-Agent':'sotm-br-2026-research/0.5 (academic OSM analysis)'})
+          except requests.RequestException as exc:
+              print('PROBE_EXCEPTION=', type(exc).__name__, str(exc))
+              raise
+          elapsed = time.monotonic() - t0
+          print('HTTP_STATUS=', r.status_code)
+          print('ELAPSED_SECONDS=', round(elapsed, 3))
+          print('CONTENT_TYPE=', r.headers.get('content-type',''))
+          if r.status_code != 200:
+              print('RESPONSE_PREFIX=', r.text[:1500])
+              r.raise_for_status()
+          body = r.json()
+          groups = body.get('groupByResult')
+          assert isinstance(groups, list) and len(groups) == 1, body
+          group = groups[0]
+          assert str(group.get('groupByObject')) == cell_id, group
+          result = group.get('result')
+          assert isinstance(result, list) and len(result) == 1, group
+          item = result[0]
+          assert {'value','fromTimestamp','toTimestamp'}.issubset(item), item
+          assert float(item['value']) >= 0
+          assert str(item['fromTimestamp']) == from_ts and str(item['toTimestamp']) == to_ts
+          assert float(item['value']) >= float(row['contributors_count'])
+          print('ALL_UNIQUE_CONTRIBUTORS=', item['value'])
+          print('PROBE_VALID=TRUE')
+          PY
