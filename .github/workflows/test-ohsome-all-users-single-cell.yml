@@ -18,13 +18,6 @@ jobs:
           python-version: '3.12'
       - name: Install minimal dependencies
         run: pip install pandas pyarrow requests
-      - name: Restore Notebook 05 production artifact
-        uses: actions/download-artifact@v4
-        with:
-          run-id: 31444549670
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: nathandamas/sotm-br-2026
-          path: restored_nb05
       - name: Test one representative cell
         run: |
           python - <<'PY'
@@ -33,10 +26,10 @@ jobs:
           import pandas as pd
           import requests
 
-          roots = list(Path('restored_nb05').rglob('petropolis_ohsome_895_cells.parquet'))
-          bounds = list(Path('restored_nb05').rglob('petropolis_grid_1km_ohsome_boundaries.geojson'))
+          roots = list(Path('data/output/notebooks/05').rglob('petropolis_ohsome_895_cells.parquet'))
+          bounds = list(Path('data/output/notebooks/05').rglob('petropolis_grid_1km_ohsome_boundaries.geojson'))
           if not roots or not bounds:
-              raise FileNotFoundError(f'Notebook 05 files missing: parquet={roots}, boundaries={bounds}')
+              raise FileNotFoundError(f'Notebook 05 files missing in repository: parquet={roots}, boundaries={bounds}')
           road = pd.read_parquet(roots[0])
           road['grid_1km_id'] = road['grid_1km_id'].astype(str)
           road['contributors_count'] = pd.to_numeric(road['contributors_count'])
