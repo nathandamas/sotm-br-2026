@@ -1,0 +1,91 @@
+name: Run Figure 12
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/figure12_metric_definition.py'
+      - '.github/workflows/run-figure-12.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build-figure-12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely matplotlib contextily xyzservices pyproj rasterio pillow
+
+      - name: Restore final typology output
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31486390648
+          artifact-ids: 9099287431
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb11
+
+      - name: Restore final GeoParquet
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb11/notebook-11-final-osm-typology-results/action_outputs/processed/petropolis_grid_1km_with_osm_typology_final.parquet data/processed/Petropolis/
+
+      - name: Build Figure 12
+        run: python scripts/figure12_metric_definition.py
+
+      - name: Validate Figure 12
+        run: |
+          test -f data/output/figures/figure_12_contributions_per_mapped_road_km.png
+          test -f data/output/figures/figure_12_contributions_per_mapped_road_km.pdf
+          test -f data/output/figures/figure_12_contributions_per_mapped_road_km_summary.csv
+          python - <<'PY'
+          import pandas as pd
+          from PIL import Image
+          p = 'data/output/figures/figure_12_contributions_per_mapped_road_km.png'
+          with Image.open(p) as im:
+              assert im.size == (9600, 6000), im.size
+          s = pd.read_csv('data/output/figures/figure_12_contributions_per_mapped_road_km_summary.csv')
+          assert int(s.loc[0, 'n_cells']) == 895
+          assert int(s.loc[0, 'defined_cells']) == 781
+          assert int(s.loc[0, 'undefined_zero_road_cells']) == 114
+          assert float(s.loc[0, 'min']) >= 0
+          print(s.to_string(index=False))
+          PY
+
+      - name: Commit Figure 12
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            data/output/figures/figure_12_contributions_per_mapped_road_km.png \
+            data/output/figures/figure_12_contributions_per_mapped_road_km.pdf \
+            data/output/figures/figure_12_contributions_per_mapped_road_km_summary.csv \
+            data/output/figures/figure_manifest.csv
+          git commit -m 'Generate contributions-per-road-km map'
+          git push origin main
+
+      - name: Upload Figure 12 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: figure-12-contributions-per-road-km
+          path: |
+            data/output/figures/figure_12_contributions_per_mapped_road_km.png
+            data/output/figures/figure_12_contributions_per_mapped_road_km.pdf
+            data/output/figures/figure_12_contributions_per_mapped_road_km_summary.csv
+          retention-days: 30
