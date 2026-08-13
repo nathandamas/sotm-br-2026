@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 
 API_BASE = "https://api.ohsome.org/v1"
-BATCH_SIZE = 25
+BATCH_SIZE = 5
 REQUEST_TIMEOUT = 240
 MAX_ATTEMPTS = 5
 TRANSIENT_STATUS = {429, 500, 502, 503, 504}
@@ -117,7 +117,33 @@ def request_or_cache(batch_no, batch_ids):
     url = f"{API_BASE}/users/count/groupBy/boundary"
     last_error = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        response = session.post(url, data=data, timeout=REQUEST_TIMEOUT)
+        try:
+            response = session.post(url, data=data, timeout=REQUEST_TIMEOUT)
+        except requests.RequestException as exc:
+            last_error = exc
+            transport_error = {
+                "request": {
+                    "endpoint": "/users/count/groupBy/boundary",
+                    "batch_no": batch_no,
+                    "ids": batch_ids,
+                    "feature_count": len(batch_ids),
+                    "filter": None,
+                    "time": USERS_TIME,
+                    "attempt": attempt,
+                },
+                "transport_error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                },
+                "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+            path.with_suffix(f".attempt_{attempt:02d}.transport_error.json").write_text(
+                json.dumps(transport_error, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+            if attempt == MAX_ATTEMPTS:
+                raise
+            time.sleep(min(2 ** attempt, 30))
+            continue
         try:
             body = response.json()
         except Exception:
