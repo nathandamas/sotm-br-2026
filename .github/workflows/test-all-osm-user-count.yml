@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pandas pyarrow requests
-      - name: Test explicit all-type filter on one cell
+      - name: Test substantive contribution types on one cell
         run: |
           python - <<'PY'
           import json, time
@@ -43,7 +43,7 @@ jobs:
               'bpolys': json.dumps(one,separators=(',',':')),
               'time': f'{fr}/{to}',
               'format':'json',
-              'filter':'type:node or type:way or type:relation',
+              'contributionType':'creation,deletion,tagChange,geometryChange',
           }
           url = 'https://api.ohsome.org/v1/users/count/groupBy/boundary'
           s = requests.Session()
