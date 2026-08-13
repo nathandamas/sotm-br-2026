@@ -21,12 +21,36 @@ OUT = ROOT / "data" / "output" / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 GRID_FILE = ROOT / "data" / "processed" / "Petropolis" / "petropolis_grid_1km_with_osm_typology_final.parquet"
 MUNICIPALITY_FILE = ROOT / "Petropolis" / "Petropolis_2025_4674_IBGE.parquet"
+CONTRIBUTOR_FILE = ROOT / "data" / "output" / "notebooks" / "14" / "petropolis_unique_contributors_895_cells.parquet"
 for path in (GRID_FILE, MUNICIPALITY_FILE):
     if not path.exists():
         raise FileNotFoundError(path)
 
 gdf = gpd.read_parquet(GRID_FILE)
 municipality = gpd.read_parquet(MUNICIPALITY_FILE)
+if CONTRIBUTOR_FILE.exists():
+    contributor_metrics = pd.read_parquet(CONTRIBUTOR_FILE)
+    contributor_metrics["grid_1km_id"] = contributor_metrics["grid_1km_id"].astype(str)
+    required_contributor_cols = {
+        "grid_1km_id", "all_unique_contributors_count", "road_unique_contributors_count"
+    }
+    missing_contributor_cols = required_contributor_cols - set(contributor_metrics.columns)
+    if missing_contributor_cols:
+        raise KeyError(f"Contributor metrics missing columns: {sorted(missing_contributor_cols)}")
+    if len(contributor_metrics) != 895 or not contributor_metrics["grid_1km_id"].is_unique:
+        raise ValueError("Notebook 14 contributor metrics must contain 895 unique grid IDs.")
+    gdf["grid_1km_id"] = gdf["grid_1km_id"].astype(str)
+    gdf = gdf.merge(
+        contributor_metrics[[
+            "grid_1km_id", "all_unique_contributors_count", "road_unique_contributors_count"
+        ]],
+        on="grid_1km_id", how="left", validate="one_to_one",
+    )
+    if gdf[["all_unique_contributors_count", "road_unique_contributors_count"]].isna().any().any():
+        raise ValueError("Contributor metrics merge produced missing values.")
+    print("Loaded contributor metrics:", CONTRIBUTOR_FILE)
+else:
+    print("Contributor metrics not present; Figures 09–10 will be skipped.")
 assert len(gdf) == 895
 assert gdf["grid_1km_id"].astype(str).is_unique
 assert gdf.crs is not None and municipality.crs is not None
@@ -319,14 +343,15 @@ def draw_location_panel(ax):
         )
 
 
-def draw_sources_panel(ax):
+def draw_sources_panel(ax, first_line=None):
     style_box(ax)
+    source_line = DATA_SOURCE_LINES[0] if first_line is None else first_line
     ax.text(
         0.055, 0.92, "DATA SOURCES", transform=ax.transAxes,
         ha="left", va="top", fontsize=10.8, fontweight="bold",
     )
     ax.text(
-        0.065, 0.78, f"• {DATA_SOURCE_LINES[0]}",
+        0.065, 0.78, f"• {source_line}",
         transform=ax.transAxes, ha="left", va="top", fontsize=8.7,
     )
     ax.text(
@@ -457,7 +482,7 @@ def make_continuous_legend(column, label, log=False):
     return norm, drawer
 
 
-def base_figure(title, note, legend_drawer):
+def base_figure(title, note, legend_drawer, source_first_line=None):
     fig = plt.figure(figsize=(16.0, 10.0), facecolor="white")
     fig.suptitle(title, x=0.5, y=0.972, fontsize=18, fontweight="bold", ha="center")
 
@@ -481,7 +506,7 @@ def base_figure(title, note, legend_drawer):
 
     draw_location_panel(location_ax)
     legend_drawer(legend_ax)
-    draw_sources_panel(sources_ax)
+    draw_sources_panel(sources_ax, source_first_line)
 
     # The outer map panel is only a safe layout envelope. The actual map frame
     # is inset, leaving dedicated room for geographic labels on all four sides.
@@ -546,14 +571,14 @@ def plot_typology():
     save(fig, "figure_01_final_typology")
 
 
-def plot_continuous(column, title, legend_label, stem, note, log=False):
+def plot_continuous(column, title, legend_label, stem, note, log=False, source_first_line=None):
     if column not in g_display.columns:
         raise KeyError(column)
     s = pd.to_numeric(g_display[column], errors="coerce").replace([np.inf, -np.inf], np.nan)
     if s.dropna().empty:
         raise ValueError(f"No valid values for {column}")
     norm, drawer = make_continuous_legend(column, legend_label, log)
-    fig, ax = base_figure(title, note, drawer)
+    fig, ax = base_figure(title, note, drawer, source_first_line)
     if log:
         mask = s > 0
         g_display.loc[~mask].plot(
@@ -625,6 +650,23 @@ plot_continuous(
     "figure_08_plateau_duration",
     "Duration of the intrinsic plateau phase identified from each cell's OSM road-mapping trajectory. Plateau is a trajectory descriptor and must not be interpreted as external completeness.",
 )
+
+if {"all_unique_contributors_count", "road_unique_contributors_count"}.issubset(g_display.columns):
+    plot_continuous(
+        "all_unique_contributors_count",
+        "UNIQUE OSM CONTRIBUTORS — PETRÓPOLIS (RJ), BRAZIL",
+        "Unique OSM contributors (users)",
+        "figure_09_unique_osm_contributors",
+        "Number of unique OpenStreetMap users who contributed to any OSM feature within each 1 km analytical cell over the same frozen historical interval used for the road-contributor analysis. This is an identity-based unique-user count, not a sum of monthly contributor counts.",
+        source_first_line="OpenStreetMap contribution history via ohsome API",
+    )
+    plot_continuous(
+        "road_unique_contributors_count",
+        "UNIQUE ROAD-MAPPING CONTRIBUTORS — PETRÓPOLIS (RJ), BRAZIL",
+        "Unique contributors to highway=* lines",
+        "figure_10_unique_road_contributors",
+        "Number of unique OpenStreetMap users who contributed to line elements tagged highway=* within each 1 km analytical cell over the frozen Notebook 05 historical interval. The count is the validated road-filtered /users/count metric and is not a contributor-month sum.",
+    )
 
 manifest = []
 for p in sorted(OUT.glob("figure_*.*")):
