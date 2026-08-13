@@ -1,0 +1,112 @@
+name: Run Figure 11
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/figure11_contributor_activity.py'
+      - 'scripts/notebook12_build_article_maps.py'
+      - '.github/workflows/run-figure-11.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build-figure-11:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas numpy pyarrow shapely matplotlib contextily xyzservices pyproj rasterio pillow
+
+      - name: Restore Notebook 11 final outputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 31486390648
+          artifact-ids: 9099287431
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: nathandamas/sotm-br-2026
+          path: restored_nb11
+
+      - name: Restore final GeoParquet
+        run: |
+          mkdir -p data/processed/Petropolis
+          cp restored_nb11/notebook-11-final-osm-typology-results/action_outputs/processed/petropolis_grid_1km_with_osm_typology_final.parquet data/processed/Petropolis/
+
+      - name: Build Figure 11
+        run: python scripts/figure11_contributor_activity.py
+
+      - name: Validate Figure 11
+        run: |
+          test -f data/output/figures/figure_11_contributor_activity.png
+          test -f data/output/figures/figure_11_contributor_activity.pdf
+          test -f data/output/figures/figure_11_contributor_activity_summary.csv
+          ! grep -qi 'notebook' scripts/figure11_contributor_activity.py || {
+            # Internal implementation comments may mention the base script; the
+            # cartographic interpretation text itself must not expose notebook names.
+            python - <<'PY'
+          from pathlib import Path
+          text = Path('scripts/figure11_contributor_activity.py').read_text(encoding='utf-8')
+          note = text.split('"Contributor activity is measured', 1)[1].split('",\n)', 1)[0]
+          assert 'notebook' not in note.lower()
+          print('Interpretation box contains no notebook reference.')
+          PY
+          }
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          from PIL import Image
+          png = Path('data/output/figures/figure_11_contributor_activity.png')
+          pdf = Path('data/output/figures/figure_11_contributor_activity.pdf')
+          summary = pd.read_csv('data/output/figures/figure_11_contributor_activity_summary.csv')
+          assert png.stat().st_size > 100_000
+          assert pdf.stat().st_size > 10_000
+          with Image.open(png) as im:
+              assert im.size == (9600, 6000), im.size
+          assert len(summary) == 1
+          assert summary.loc[0, 'indicator'] == 'total_contributor_months'
+          assert summary.loc[0, 'n_cells'] == 895
+          assert summary.loc[0, 'min'] >= 0
+          print(summary.to_string(index=False))
+          print('Figure 11 PNG dimensions:', Image.open(png).size)
+          PY
+
+      - name: Commit Figure 11
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            data/output/figures/figure_11_contributor_activity.png \
+            data/output/figures/figure_11_contributor_activity.pdf \
+            data/output/figures/figure_11_contributor_activity_summary.csv \
+            data/output/figures/figure_manifest.csv
+          if git diff --cached --quiet; then
+            echo 'No Figure 11 changes to commit.'
+          else
+            git commit -m 'Generate contributor activity map'
+            git push origin main
+          fi
+
+      - name: Upload Figure 11 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: figure-11-contributor-activity
+          path: |
+            data/output/figures/figure_11_contributor_activity.png
+            data/output/figures/figure_11_contributor_activity.pdf
+            data/output/figures/figure_11_contributor_activity_summary.csv
+          retention-days: 30
