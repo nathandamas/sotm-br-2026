@@ -1,0 +1,58 @@
+name: Test all OSM user count
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-all-osm-user-count.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas pyarrow requests
+      - name: Test three individual cells
+        run: |
+          python - <<'PY'
+          import json, time
+          from pathlib import Path
+          import pandas as pd
+          import requests
+
+          root = Path('.')
+          nb05 = root/'data/output/notebooks/05/notebook-05-ohsome-production-results/production_outputs'
+          road = pd.read_parquet(nb05/'petropolis_ohsome_895_cells.parquet')
+          fc = json.loads((nb05/'petropolis_grid_1km_ohsome_boundaries.geojson').read_text())
+          by_id = {str(f['properties']['id']): f for f in fc['features']}
+          road['grid_1km_id'] = road['grid_1km_id'].astype(str)
+          road['contributors_count'] = pd.to_numeric(road['contributors_count'])
+          road = road.sort_values('contributors_count').reset_index(drop=True)
+          picks = [('low', 0.10), ('median', 0.50), ('high', 0.90)]
+          fr = str(road['contributors_count_from'].dropna().iloc[0])
+          to = str(road['contributors_count_to'].dropna().iloc[0])
+          url = 'https://api.ohsome.org/v1/users/count/groupBy/boundary'
+          s = requests.Session()
+          s.headers['User-Agent'] = 'sotm-br-2026-research/0.5 (diagnostic)'
+          for label, q in picks:
+              idx = min(int(round(q*(len(road)-1))), len(road)-1)
+              row = road.iloc[idx]
+              gid = row['grid_1km_id']
+              one = {'type':'FeatureCollection','features':[by_id[gid]]}
+              data = {'bpolys': json.dumps(one,separators=(',',':')), 'time': f'{fr}/{to}', 'format':'json'}
+              t0 = time.time()
+              try:
+                  r = s.post(url, data=data, timeout=180)
+                  dt = time.time()-t0
+                  print(label, gid, 'road_users=', row['contributors_count'], 'status=', r.status_code, 'seconds=', round(dt,2))
+                  print(json.dumps(r.json(), ensure_ascii=False)[:1200])
+              except Exception as e:
+                  print(label, gid, 'road_users=', row['contributors_count'], 'ERROR', type(e).__name__, str(e), 'seconds=', round(time.time()-t0,2))
+          PY
