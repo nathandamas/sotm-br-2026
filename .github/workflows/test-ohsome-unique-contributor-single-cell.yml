@@ -1,0 +1,82 @@
+name: Test ohsome unique contributors single cell
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-ohsome-unique-contributor-single-cell.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-single-cell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install minimal dependencies
+        run: pip install pandas pyarrow requests
+      - name: Test exact all-OSM unique-user query on one representative cell
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, time
+          import pandas as pd
+          import requests
+
+          root = Path.cwd()
+          nb05 = root / 'data/output/notebooks/05/notebook-05-ohsome-production-results/production_outputs'
+          road = pd.read_parquet(nb05 / 'petropolis_ohsome_895_cells.parquet')
+          road['grid_1km_id'] = road['grid_1km_id'].astype(str)
+          fv = road['contributors_count_from'].dropna().astype(str).unique().tolist()
+          tv = road['contributors_count_to'].dropna().astype(str).unique().tolist()
+          assert len(fv) == 1 and len(tv) == 1, (fv, tv)
+          interval = f'{fv[0]}/{tv[0]}'
+          # representative cell: closest road-contributor count to the median
+          med = pd.to_numeric(road['contributors_count'], errors='coerce').median()
+          idx = (pd.to_numeric(road['contributors_count'], errors='coerce') - med).abs().idxmin()
+          grid_id = str(road.loc[idx, 'grid_1km_id'])
+
+          fc = json.loads((nb05 / 'petropolis_grid_1km_ohsome_boundaries.geojson').read_text(encoding='utf-8'))
+          feat = next(f for f in fc['features'] if str(f.get('properties', {}).get('id')) == grid_id)
+          bpoly = {'type':'FeatureCollection','features':[feat]}
+          payload = {
+              'bpolys': json.dumps(bpoly, ensure_ascii=False, separators=(',', ':')),
+              'time': interval,
+              'format': 'json',
+          }
+          url = 'https://api.ohsome.org/v1/users/count/groupBy/boundary'
+          print('grid_1km_id=', grid_id, flush=True)
+          print('frozen_interval=', interval, flush=True)
+          print('road_contributors_median=', med, flush=True)
+          t0 = time.monotonic()
+          try:
+              r = requests.post(url, data=payload, headers={'User-Agent':'sotm-br-2026-research/availability-test'}, timeout=90)
+          except requests.RequestException as exc:
+              print('transport_error=', type(exc).__name__, str(exc), flush=True)
+              raise SystemExit(75)
+          elapsed = time.monotonic() - t0
+          print('http_status=', r.status_code, flush=True)
+          print('elapsed_seconds=', round(elapsed, 3), flush=True)
+          print('content_type=', r.headers.get('content-type',''), flush=True)
+          print('response_prefix=', r.text[:1200].replace('\n',' '), flush=True)
+          if r.status_code in {429, 500, 502, 503, 504}:
+              raise SystemExit(75)
+          r.raise_for_status()
+          body = r.json()
+          groups = body.get('groupByResult') if isinstance(body, dict) else None
+          assert isinstance(groups, list) and len(groups) == 1, body
+          group = groups[0]
+          assert str(group.get('groupByObject')) == grid_id, group
+          result = group.get('result')
+          assert isinstance(result, list) and len(result) == 1, group
+          item = result[0]
+          assert 'value' in item and 'fromTimestamp' in item and 'toTimestamp' in item, item
+          assert float(item['value']) >= 0, item
+          print('VALID_SINGLE_CELL_RESPONSE value=', item['value'], 'from=', item['fromTimestamp'], 'to=', item['toTimestamp'], flush=True)
+          PY
