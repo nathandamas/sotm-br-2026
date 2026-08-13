@@ -22,17 +22,39 @@ OUT.mkdir(parents=True, exist_ok=True)
 GRID_FILE = ROOT / "data" / "processed" / "Petropolis" / "petropolis_grid_1km_with_osm_typology_final.parquet"
 MUNICIPALITY_FILE = ROOT / "Petropolis" / "Petropolis_2025_4674_IBGE.parquet"
 CONTRIBUTOR_FILE = ROOT / "data" / "output" / "notebooks" / "14" / "petropolis_unique_contributors_895_cells.parquet"
+ROAD_CONTRIBUTOR_FILE = ROOT / "data" / "output" / "notebooks" / "05" / "notebook-05-ohsome-production-results" / "production_outputs" / "petropolis_ohsome_895_cells.parquet"
 for path in (GRID_FILE, MUNICIPALITY_FILE):
     if not path.exists():
         raise FileNotFoundError(path)
 
 gdf = gpd.read_parquet(GRID_FILE)
 municipality = gpd.read_parquet(MUNICIPALITY_FILE)
+gdf["grid_1km_id"] = gdf["grid_1km_id"].astype(str)
+
+if ROAD_CONTRIBUTOR_FILE.exists():
+    road_contributors = pd.read_parquet(ROAD_CONTRIBUTOR_FILE)
+    road_contributors["grid_1km_id"] = road_contributors["grid_1km_id"].astype(str)
+    if "contributors_count" not in road_contributors.columns:
+        raise KeyError("Notebook 05 road contributor output lacks contributors_count")
+    if len(road_contributors) != 895 or not road_contributors["grid_1km_id"].is_unique:
+        raise ValueError("Notebook 05 road contributor table must contain 895 unique grid IDs.")
+    road_contributors["road_unique_contributors_count"] = pd.to_numeric(
+        road_contributors["contributors_count"], errors="raise"
+    )
+    gdf = gdf.merge(
+        road_contributors[["grid_1km_id", "road_unique_contributors_count"]],
+        on="grid_1km_id", how="left", validate="one_to_one",
+    )
+    if gdf["road_unique_contributors_count"].isna().any():
+        raise ValueError("Notebook 05 road contributor merge produced missing values.")
+    print("Loaded validated road contributor metric:", ROAD_CONTRIBUTOR_FILE)
+else:
+    print("Notebook 05 road contributor materialization not found; Figure 10 will be skipped.")
 if CONTRIBUTOR_FILE.exists():
     contributor_metrics = pd.read_parquet(CONTRIBUTOR_FILE)
     contributor_metrics["grid_1km_id"] = contributor_metrics["grid_1km_id"].astype(str)
     required_contributor_cols = {
-        "grid_1km_id", "all_unique_contributors_count", "road_unique_contributors_count"
+        "grid_1km_id", "all_unique_contributors_count"
     }
     missing_contributor_cols = required_contributor_cols - set(contributor_metrics.columns)
     if missing_contributor_cols:
@@ -42,12 +64,12 @@ if CONTRIBUTOR_FILE.exists():
     gdf["grid_1km_id"] = gdf["grid_1km_id"].astype(str)
     gdf = gdf.merge(
         contributor_metrics[[
-            "grid_1km_id", "all_unique_contributors_count", "road_unique_contributors_count"
+            "grid_1km_id", "all_unique_contributors_count"
         ]],
         on="grid_1km_id", how="left", validate="one_to_one",
     )
-    if gdf[["all_unique_contributors_count", "road_unique_contributors_count"]].isna().any().any():
-        raise ValueError("Contributor metrics merge produced missing values.")
+    if gdf[["all_unique_contributors_count"]].isna().any().any():
+        raise ValueError("All-OSM contributor metrics merge produced missing values.")
     print("Loaded contributor metrics:", CONTRIBUTOR_FILE)
 else:
     print("Contributor metrics not present; Figures 09–10 will be skipped.")
@@ -651,7 +673,7 @@ plot_continuous(
     "Duration of the intrinsic plateau phase identified from each cell's OSM road-mapping trajectory. Plateau is a trajectory descriptor and must not be interpreted as external completeness.",
 )
 
-if {"all_unique_contributors_count", "road_unique_contributors_count"}.issubset(g_display.columns):
+if "all_unique_contributors_count" in g_display.columns:
     plot_continuous(
         "all_unique_contributors_count",
         "UNIQUE OSM CONTRIBUTORS — PETRÓPOLIS (RJ), BRAZIL",
@@ -660,6 +682,8 @@ if {"all_unique_contributors_count", "road_unique_contributors_count"}.issubset(
         "Number of unique OpenStreetMap users who contributed to any OSM feature within each 1 km analytical cell over the same frozen historical interval used for the road-contributor analysis. This is an identity-based unique-user count, not a sum of monthly contributor counts.",
         source_first_line="OpenStreetMap contribution history via ohsome API",
     )
+
+if "road_unique_contributors_count" in g_display.columns:
     plot_continuous(
         "road_unique_contributors_count",
         "UNIQUE ROAD-MAPPING CONTRIBUTORS — PETRÓPOLIS (RJ), BRAZIL",
