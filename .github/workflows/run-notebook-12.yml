@@ -80,4 +80,4 @@ jobs:
             data/output/figures/
           retention-days: 30
 
-# Trigger-only comment: locator ocean background regeneration.
+# Trigger-only comment: generate validated Notebook 05 road-contributor map.
