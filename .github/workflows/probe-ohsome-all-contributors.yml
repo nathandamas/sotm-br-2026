@@ -73,3 +73,5 @@ jobs:
               print('PROBE_TRANSIENT_ERROR=', repr(exc))
               raise SystemExit(3)
           PY
+
+# retry marker: 2026-08-13T08:07:07-03:00
