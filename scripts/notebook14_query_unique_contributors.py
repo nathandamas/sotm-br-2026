@@ -1,15 +1,17 @@
 from pathlib import Path
 import json
+import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 import pandas as pd
 import requests
 
 API_BASE = "https://api.ohsome.org/v1"
-BATCH_SIZE = 5
-REQUEST_TIMEOUT = 240
-MAX_ATTEMPTS = 5
+REQUEST_TIMEOUT = 180
+MAX_ATTEMPTS = 2
+MAX_WORKERS = 12
 TRANSIENT_STATUS = {429, 500, 502, 503, 504}
 
 
@@ -30,6 +32,7 @@ RAW_DIR = ROOT / "data" / "raw" / "ohsome" / "Petropolis" / "all_unique_contribu
 OUT_FILE = OUT_DIR / "petropolis_unique_contributors_895_cells.parquet"
 QC_FILE = OUT_DIR / "unique_contributors_quality_checks.csv"
 SUMMARY_FILE = OUT_DIR / "unique_contributors_summary.csv"
+PROGRESS_FILE = OUT_DIR / "unique_contributors_query_progress.csv"
 
 for path in (ROAD_METRICS_FILE, BOUNDARIES_FILE):
     if not path.exists():
@@ -68,82 +71,104 @@ ids = sorted(road["grid_1km_id"].tolist())
 if len(features) != 895 or set(ids) != set(feature_by_id):
     raise ValueError("Boundary collection does not match the 895 Notebook 05 grid IDs.")
 
-batches = [ids[i : i + BATCH_SIZE] for i in range(0, len(ids), BATCH_SIZE)]
-session = requests.Session()
-session.headers.update({"User-Agent": "sotm-br-2026-research/0.5 (academic OSM analysis)"})
+HEADERS = {"User-Agent": "sotm-br-2026-research/0.6 (academic OSM analysis)"}
 
 
-def batch_fc(batch_ids):
-    return {"type": "FeatureCollection", "features": [feature_by_id[i] for i in batch_ids]}
+def single_fc(grid_id):
+    return {"type": "FeatureCollection", "features": [feature_by_id[grid_id]]}
 
 
-def validate_body(body, expected_ids):
+def validate_body(body, expected_id):
     groups = body.get("groupByResult") if isinstance(body, dict) else None
-    if not isinstance(groups, list):
-        raise ValueError("Missing groupByResult list in ohsome response.")
-    returned = [str(g.get("groupByObject")) for g in groups]
-    if len(returned) != len(set(returned)) or set(returned) != set(expected_ids):
-        raise ValueError("Boundary IDs returned by ohsome do not match the requested batch.")
-    for group in groups:
-        result = group.get("result")
-        if not isinstance(result, list) or len(result) != 1:
-            raise ValueError(f"Expected exactly one interval for {group.get('groupByObject')}")
-        item = result[0]
-        if "value" not in item or not {"fromTimestamp", "toTimestamp"}.issubset(item):
-            raise ValueError("Unexpected /users/count/groupBy/boundary response schema.")
+    if not isinstance(groups, list) or len(groups) != 1:
+        raise ValueError(f"Expected one groupByResult object for grid {expected_id}.")
+    group = groups[0]
+    returned_id = str(group.get("groupByObject"))
+    if returned_id != str(expected_id):
+        raise ValueError(f"ohsome returned grid {returned_id}, expected {expected_id}.")
+    result = group.get("result")
+    if not isinstance(result, list) or len(result) != 1:
+        raise ValueError(f"Expected exactly one time interval for grid {expected_id}.")
+    item = result[0]
+    if "value" not in item or not {"fromTimestamp", "toTimestamp"}.issubset(item):
+        raise ValueError("Unexpected /users/count/groupBy/boundary response schema.")
     return True
 
 
-def checkpoint_path(batch_no):
-    return RAW_DIR / f"batch_{batch_no:03d}.json"
+def safe_id(grid_id):
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(grid_id))
 
 
-def request_or_cache(batch_no, batch_ids):
-    path = checkpoint_path(batch_no)
-    if path.exists():
-        cached = json.loads(path.read_text(encoding="utf-8"))
-        body = cached.get("response", {}).get("body")
-        if cached.get("response", {}).get("status_code") == 200:
-            validate_body(body, batch_ids)
-            return body, "cache"
+def checkpoint_path(grid_id):
+    return RAW_DIR / f"cell_{safe_id(grid_id)}.json"
 
+
+def parse_body(body):
+    group = body["groupByResult"][0]
+    item = group["result"][0]
+    return {
+        "grid_1km_id": str(group["groupByObject"]),
+        "all_unique_contributors_count": float(item["value"]),
+        "all_unique_contributors_from": item["fromTimestamp"],
+        "all_unique_contributors_to": item["toTimestamp"],
+    }
+
+
+def load_cached(grid_id):
+    path = checkpoint_path(grid_id)
+    if not path.exists():
+        return None
+    cached = json.loads(path.read_text(encoding="utf-8"))
+    response = cached.get("response", {})
+    body = response.get("body")
+    if response.get("status_code") != 200:
+        return None
+    try:
+        validate_body(body, grid_id)
+    except Exception:
+        return None
+    return parse_body(body)
+
+
+def query_cell(grid_id):
+    cached = load_cached(grid_id)
+    if cached is not None:
+        return grid_id, cached, "cache", None
+
+    path = checkpoint_path(grid_id)
+    url = f"{API_BASE}/users/count/groupBy/boundary"
     data = {
-        "bpolys": json.dumps(batch_fc(batch_ids), ensure_ascii=False, separators=(",", ":")),
+        "bpolys": json.dumps(single_fc(grid_id), ensure_ascii=False, separators=(",", ":")),
         "time": USERS_TIME,
         "format": "json",
     }
-    # Deliberately no `filter`: this request counts unique users contributing to
-    # any OSM feature in each boundary, unlike Notebook 05's road-filtered count.
-    url = f"{API_BASE}/users/count/groupBy/boundary"
     last_error = None
+
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
-            response = session.post(url, data=data, timeout=REQUEST_TIMEOUT)
+            response = requests.post(url, data=data, headers=HEADERS, timeout=REQUEST_TIMEOUT)
         except requests.RequestException as exc:
             last_error = exc
-            transport_error = {
+            envelope = {
                 "request": {
                     "endpoint": "/users/count/groupBy/boundary",
-                    "batch_no": batch_no,
-                    "ids": batch_ids,
-                    "feature_count": len(batch_ids),
+                    "grid_1km_id": grid_id,
+                    "feature_count": 1,
                     "filter": None,
                     "time": USERS_TIME,
                     "attempt": attempt,
                 },
-                "transport_error": {
-                    "type": type(exc).__name__,
-                    "message": str(exc),
-                },
+                "transport_error": {"type": type(exc).__name__, "message": str(exc)},
                 "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
             }
             path.with_suffix(f".attempt_{attempt:02d}.transport_error.json").write_text(
-                json.dumps(transport_error, indent=2, ensure_ascii=False), encoding="utf-8"
+                json.dumps(envelope, indent=2, ensure_ascii=False), encoding="utf-8"
             )
-            if attempt == MAX_ATTEMPTS:
-                raise
-            time.sleep(min(2 ** attempt, 30))
-            continue
+            if attempt < MAX_ATTEMPTS:
+                time.sleep(min(2 ** attempt, 15))
+                continue
+            return grid_id, None, "error", f"{type(exc).__name__}: {exc}"
+
         try:
             body = response.json()
         except Exception:
@@ -151,11 +176,11 @@ def request_or_cache(batch_no, batch_ids):
         envelope = {
             "request": {
                 "endpoint": "/users/count/groupBy/boundary",
-                "batch_no": batch_no,
-                "ids": batch_ids,
-                "feature_count": len(batch_ids),
+                "grid_1km_id": grid_id,
+                "feature_count": 1,
                 "filter": None,
                 "time": USERS_TIME,
+                "attempt": attempt,
             },
             "response": {
                 "status_code": response.status_code,
@@ -165,49 +190,90 @@ def request_or_cache(batch_no, batch_ids):
             "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         }
         if response.ok:
-            validate_body(body, batch_ids)
+            try:
+                validate_body(body, grid_id)
+            except Exception as exc:
+                return grid_id, None, "error", f"SchemaError: {exc}"
             path.write_text(json.dumps(envelope, indent=2, ensure_ascii=False), encoding="utf-8")
-            return body, "request"
-        error_path = path.with_suffix(".error.json")
-        error_path.write_text(json.dumps(envelope, indent=2, ensure_ascii=False), encoding="utf-8")
-        last_error = RuntimeError(
-            f"All-OSM contributor batch {batch_no} HTTP {response.status_code}: "
-            f"{json.dumps(body, ensure_ascii=False)[:1000]}"
+            return grid_id, parse_body(body), "request", None
+
+        path.with_suffix(f".attempt_{attempt:02d}.http_error.json").write_text(
+            json.dumps(envelope, indent=2, ensure_ascii=False), encoding="utf-8"
         )
+        last_error = RuntimeError(f"HTTP {response.status_code}: {json.dumps(body, ensure_ascii=False)[:500]}")
         if response.status_code not in TRANSIENT_STATUS or attempt == MAX_ATTEMPTS:
-            raise last_error
+            return grid_id, None, "error", str(last_error)
         retry_after = response.headers.get("Retry-After")
-        delay = float(retry_after) if retry_after and retry_after.isdigit() else min(2 ** attempt, 30)
+        delay = float(retry_after) if retry_after and retry_after.isdigit() else min(2 ** attempt, 15)
         time.sleep(delay)
-    raise last_error
+
+    return grid_id, None, "error", str(last_error)
 
 
-def parse_body(body):
-    rows = []
-    for group in body["groupByResult"]:
-        item = group["result"][0]
-        rows.append(
-            {
-                "grid_1km_id": str(group["groupByObject"]),
-                "all_unique_contributors_count": float(item["value"]),
-                "all_unique_contributors_from": item["fromTimestamp"],
-                "all_unique_contributors_to": item["toTimestamp"],
-            }
-        )
-    return pd.DataFrame(rows)
+rows = []
+progress = []
+pre_cached = 0
+pending_ids = []
+for grid_id in ids:
+    cached = load_cached(grid_id)
+    if cached is None:
+        pending_ids.append(grid_id)
+    else:
+        rows.append(cached)
+        progress.append({"grid_1km_id": grid_id, "status": "cache", "error": ""})
+        pre_cached += 1
 
+print(
+    f"Notebook 14 all-OSM unique users: {pre_cached} cached, {len(pending_ids)} pending, "
+    f"workers={MAX_WORKERS}, timeout={REQUEST_TIMEOUT}s, attempts={MAX_ATTEMPTS}",
+    flush=True,
+)
 
-parts = []
-sources = {"request": 0, "cache": 0}
-for batch_no, batch_ids in enumerate(batches, start=1):
-    body, source = request_or_cache(batch_no, batch_ids)
-    sources[source] += 1
-    parts.append(parse_body(body))
-    print(f"Batch {batch_no:02d}/{len(batches)}: {source}; cells={len(batch_ids)}")
+if pending_ids:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(query_cell, grid_id): grid_id for grid_id in pending_ids}
+        completed = 0
+        for future in as_completed(futures):
+            grid_id = futures[future]
+            try:
+                returned_id, row, source, error = future.result()
+            except Exception as exc:
+                returned_id, row, source, error = grid_id, None, "error", f"{type(exc).__name__}: {exc}"
+            if str(returned_id) != str(grid_id):
+                source = "error"
+                error = f"Worker ID mismatch: returned {returned_id}, expected {grid_id}"
+                row = None
+            if row is not None:
+                rows.append(row)
+            progress.append({"grid_1km_id": grid_id, "status": source, "error": error or ""})
+            completed += 1
+            if completed % 10 == 0 or source == "error" or completed == len(pending_ids):
+                success_now = sum(p["status"] in {"cache", "request"} for p in progress)
+                print(
+                    f"Progress: {success_now}/895 valid checkpoints; completed this run {completed}/{len(pending_ids)}; "
+                    f"latest={grid_id} status={source}",
+                    flush=True,
+                )
 
-all_users = pd.concat(parts, ignore_index=True)
+progress_df = pd.DataFrame(progress).sort_values("grid_1km_id")
+progress_df.to_csv(PROGRESS_FILE, index=False)
+
+all_users = pd.DataFrame(rows)
+if not all_users.empty:
+    all_users["grid_1km_id"] = all_users["grid_1km_id"].astype(str)
+    all_users = all_users.drop_duplicates("grid_1km_id", keep="last")
+
+failed_ids = sorted(set(ids) - set(all_users.get("grid_1km_id", pd.Series(dtype=str)).astype(str)))
+if failed_ids:
+    print(f"Incomplete all-OSM unique-user query: {len(failed_ids)} cells remain. Checkpoints retained in {RAW_DIR}", flush=True)
+    print("First remaining IDs:", failed_ids[:20], flush=True)
+    raise RuntimeError(
+        f"All-OSM unique-user query incomplete: {len(failed_ids)} of 895 cells remain. "
+        "Successful per-cell checkpoints are intentionally retained for the next run."
+    )
+
 if len(all_users) != 895 or not all_users["grid_1km_id"].is_unique:
-    raise ValueError("All-OSM contributor query did not return 895 unique cells.")
+    raise ValueError("All-OSM contributor query did not produce 895 unique cells.")
 
 result = road[[
     "grid_1km_id",
@@ -271,7 +337,6 @@ summary = pd.DataFrame([
 summary.to_csv(SUMMARY_FILE, index=False)
 
 print("Frozen contributor interval:", USERS_TIME)
-print("Batch sources:", sources)
 print(qc[["check", "status", "value"]].to_string(index=False))
 print(summary.to_string(index=False))
 print("Saved:", OUT_FILE)
