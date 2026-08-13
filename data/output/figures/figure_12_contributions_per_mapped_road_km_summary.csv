@@ -1,0 +1,2 @@
+indicator,unit,n_cells,defined_cells,undefined_zero_road_cells,zero_ratio_cells,min,median,mean,p98,max,methodological_boundary
+contributions_per_mapped_road_km,contributions/km,895,781,114,0,0.7882456804136714,15.663579292748173,25.423277554150296,98.07228068956735,840.3361344537816,Historical road-related contributions divided by current mapped-road kilometres; undefined where current mapped-road length is zero and not a quality/completeness measure.
