@@ -1,0 +1,32 @@
+name: Apply Notebook 14 timeout retry patch
+
+on:
+  push:
+    paths:
+      - 'scripts/apply_nb14_timeout_retry_patch.py'
+      - '.github/workflows/apply-nb14-timeout-retry-patch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python scripts/apply_nb14_timeout_retry_patch.py
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/notebook14_query_unique_contributors.py
+          if git diff --cached --quiet; then
+            echo 'No patch changes.'
+          else
+            git commit -m 'Harden unique contributor query retries'
+            git push origin HEAD:main
+          fi
