@@ -1,0 +1,2 @@
+indicator,unit,n_cells,zero_cells,min,median,mean,p98,max,methodological_boundary
+total_contributor_months,contributor-months,895,100,0.0,9.0,18.135195530726257,78.0,118.0,Sum of monthly unique-contributor counts; not whole-period unique users.
